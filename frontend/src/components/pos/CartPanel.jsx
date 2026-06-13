@@ -13,6 +13,7 @@ export default function CartPanel({
   itemPromos, orderPromo,
   currentCustomer, onOpenCustomers, onUnlinkCustomer,
   onSendToKitchen, sendingToKitchen,
+  onSendBill,
 }) {
   const [showDiscountModal, setShowDiscountModal] = useState(false);
 
@@ -154,8 +155,8 @@ export default function CartPanel({
             <Tag size={12} />
             {coupon ? coupon.code : 'Discount'}
           </button>
-          <button className="flex items-center justify-center gap-1.5 py-1.5 rounded-lg border border-gray-200 text-xs text-gray-500 hover:bg-gray-50 hover:text-gray-700 hover:border-gray-300 transition-colors">
-            <Send size={12} /> Send
+          <button onClick={onSendBill} className="flex items-center justify-center gap-1.5 py-1.5 rounded-lg border border-gray-200 text-xs text-gray-500 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-300 transition-colors">
+            <Send size={12} /> Bill
           </button>
         </div>
       )}

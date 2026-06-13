@@ -34,25 +34,33 @@ function getEmoji(name) {
   return '🍽️';
 }
 
+// Global cache — images persist across re-renders
+const imageCache = {};
+
 // Fetch from TheMealDB, fallback to emoji
 async function fetchFoodImage(name) {
+  if (name in imageCache) return imageCache[name];
   try {
-    const terms = [name, name.split(' ')[0], name.split(' ').pop()];
+    const terms = [...new Set([name, name.split(' ')[0], name.split(' ').pop()])];
     for (const term of terms) {
       const res  = await fetch(`https://www.themealdb.com/api/json/v1/1/search.php?s=${encodeURIComponent(term)}`);
       const data = await res.json();
-      if (data.meals?.[0]?.strMealThumb) return data.meals[0].strMealThumb;
+      if (data.meals?.[0]?.strMealThumb) {
+        imageCache[name] = data.meals[0].strMealThumb;
+        return imageCache[name];
+      }
     }
   } catch (_) {}
+  imageCache[name] = null;
   return null;
 }
 
 function ProductImage({ name, size = 'card' }) {
-  const [src, setSrc] = useState(null);
-  const [tried, setTried] = useState(false);
+  const [src, setSrc] = useState(() => imageCache[name] ?? null);
 
   useEffect(() => {
-    fetchFoodImage(name).then(url => { setSrc(url); setTried(true); });
+    if (name in imageCache) { setSrc(imageCache[name]); return; }
+    fetchFoodImage(name).then(url => setSrc(url));
   }, [name]);
 
   const h = size === 'card' ? 'h-24' : 'h-10 w-10';

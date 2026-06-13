@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from 'react';
 import {
   Search, X, ChevronRight, ArrowLeft, Trash2, Pencil,
   ClipboardList, User, Calendar, Hash, Package,
-  BadgeCheck, Clock, Ban, RefreshCw,
+  BadgeCheck, Clock, Ban, RefreshCw, Mail,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { usePOS }  from '../../context/POSContext';
@@ -49,8 +49,32 @@ function OrderRow({ order, isSelected, onClick }) {
   );
 }
 
-function OrderDetail({ order, onBack, onDelete, onEdit }) {
+function OrderDetail({ order, onBack, onDelete, onEdit, authHeader }) {
   const isDraft = order.status === 'Draft';
+  const isPaid  = order.status === 'Paid';
+  const [email,       setEmail]       = useState(order.customerEmail || '');
+  const [sending,     setSending]     = useState(false);
+  const [sent,        setSent]        = useState(false);
+  const [sendError,   setSendError]   = useState('');
+
+  const handleSendBill = async () => {
+    if (!email.trim()) return;
+    setSending(true); setSendError(''); setSent(false);
+    try {
+      const res  = await fetch(`${API}/orders/${order._id}/send-bill`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeader() },
+        body: JSON.stringify({ customerEmail: email.trim() }),
+      });
+      const data = await res.json();
+      if (res.ok) setSent(true);
+      else setSendError(data.message || 'Failed to send');
+    } catch (err) {
+      setSendError(err.message);
+    } finally {
+      setSending(false);
+    }
+  };
 
   return (
     <div className="flex flex-col h-full bg-white">
@@ -131,7 +155,7 @@ function OrderDetail({ order, onBack, onDelete, onEdit }) {
         </div>
       </div>
 
-      {/* Draft actions only */}
+      {/* Draft actions */}
       {isDraft && (
         <div className="px-4 py-3 border-t border-gray-100 flex gap-2 shrink-0">
           <button onClick={() => onDelete(order._id)}
@@ -142,6 +166,31 @@ function OrderDetail({ order, onBack, onDelete, onEdit }) {
             className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition-colors shadow-sm">
             <Pencil size={14} /> Edit Order
           </button>
+        </div>
+      )}
+
+      {/* Paid — send bill */}
+      {isPaid && (
+        <div className="px-4 py-3 border-t border-gray-100 shrink-0 flex flex-col gap-2">
+          <div className="flex gap-2">
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => { setEmail(e.target.value); setSent(false); setSendError(''); }}
+              placeholder="Enter customer email"
+              className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+            />
+            <button
+              onClick={handleSendBill}
+              disabled={sending || !email.trim() || sent}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all
+                ${sent ? 'bg-emerald-100 text-emerald-700' : 'bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50'}`}
+            >
+              <Mail size={13} />
+              {sending ? 'Sending…' : sent ? '✓ Sent' : 'Send Bill'}
+            </button>
+          </div>
+          {sendError && <p className="text-xs text-red-500">{sendError}</p>}
         </div>
       )}
     </div>
@@ -259,6 +308,7 @@ export default function OrdersView() {
             onBack={() => setSelected(null)}
             onDelete={handleDelete}
             onEdit={editOrder}
+            authHeader={authHeader}
           />
         ) : (
           <div className="text-center text-gray-300">

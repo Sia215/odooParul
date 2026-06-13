@@ -47,8 +47,10 @@ router.patch('/:id/occupy', async (req, res) => {
       req.params.id,
       { occupied: !!occupied, currentOrderId: occupied ? (orderId || null) : null },
       { new: true }
-    );
+    ).populate('floor', 'name');
     if (!table) return res.status(404).json({ message: 'Table not found.' });
+    // Broadcast to all connected POS clients
+    req.app.locals.broadcast({ type: 'TABLE_UPDATE', table });
     res.json(table);
   } catch (err) {
     res.status(500).json({ message: err.message });

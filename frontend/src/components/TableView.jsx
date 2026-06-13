@@ -82,6 +82,25 @@ export default function TableSelectorModal() {
 
   useEffect(() => { fetchFloors(); }, []);
 
+  // Real-time table updates via WebSocket
+  useEffect(() => {
+    const ws = new WebSocket(`ws://${window.location.hostname}:5000`);
+    ws.onmessage = (e) => {
+      try {
+        const msg = JSON.parse(e.data);
+        if (msg.type === 'TABLE_UPDATE') {
+          setFloors(prev => prev.map(floor => ({
+            ...floor,
+            tables: floor.tables.map(t =>
+              t._id === msg.table._id ? { ...t, occupied: msg.table.occupied } : t
+            ),
+          })));
+        }
+      } catch (_) {}
+    };
+    return () => ws.close();
+  }, []);
+
   // Close on backdrop click
   const handleOverlayClick = (e) => {
     if (e.target === overlayRef.current) closeTableModal();

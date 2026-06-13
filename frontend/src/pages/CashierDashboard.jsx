@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { POSProvider, usePOS } from '../context/POSContext';
+import { CategoryProvider } from '../context/CategoryContext';
 import POSTopNav from '../components/POSTopNav';
 import AdminBlockModal from '../components/AdminBlockModal';
 import TableSelectorModal from '../components/TableView';
@@ -42,8 +43,10 @@ function POSShell() {
 
 export default function CashierDashboard() {
   return (
-    <POSProvider>
-      <POSShell />
-    </POSProvider>
+    <CategoryProvider>
+      <POSProvider>
+        <POSShell />
+      </POSProvider>
+    </CategoryProvider>
   );
 }

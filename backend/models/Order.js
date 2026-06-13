@@ -11,6 +11,7 @@ const orderItemSchema = new mongoose.Schema({
 const orderSchema = new mongoose.Schema({
   orderNumber: { type: String, unique: true },
   customer:    { type: String, default: 'Walk-in' },
+  customerEmail: { type: String, default: '' },
   table:       { number: String, floor: String },
   items:       [orderItemSchema],
   subtotal:    { type: Number, required: true },
