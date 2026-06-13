@@ -4,7 +4,7 @@ import { Plus, Trash2, ToggleLeft, ToggleRight, Tag } from 'lucide-react';
 const API = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 const EMPTY = { code: '', discountType: 'percentage', discountValue: '', active: true, expiresAt: '', usageLimit: '' };
 
-export default function CouponsPage() {
+export default function CouponsPage({ readOnly = false }) {
   const [coupons, setCoupons]     = useState([]);
   const [form, setForm]           = useState(EMPTY);
   const [showForm, setShowForm]   = useState(false);
@@ -57,13 +57,15 @@ export default function CouponsPage() {
           <h1 className="text-xl font-semibold text-gray-900">Coupons</h1>
           <p className="text-sm text-gray-500">{coupons.length} coupon codes</p>
         </div>
-        <button onClick={() => setShowForm(true)}
-          className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm rounded-lg font-medium">
-          <Plus size={15} /> Add Coupon
-        </button>
+        {!readOnly && (
+          <button onClick={() => setShowForm(true)}
+            className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm rounded-lg font-medium">
+            <Plus size={15} /> Add Coupon
+          </button>
+        )}
       </div>
 
-      {showForm && (
+      {!readOnly && showForm && (
         <form onSubmit={handleSubmit} className="bg-white border border-indigo-200 rounded-2xl p-5 mb-5 grid grid-cols-2 gap-3">
           <div className="col-span-2 text-sm font-semibold text-gray-700">New Coupon</div>
 
@@ -127,7 +129,7 @@ export default function CouponsPage() {
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                {['Code', 'Discount', 'Usage', 'Expires', 'Status', 'Actions'].map((h) => (
+                {['Code', 'Discount', 'Usage', 'Expires', 'Status', ...(!readOnly ? ['Actions'] : [])].map((h) => (
                   <th key={h} className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">{h}</th>
                 ))}
               </tr>
@@ -150,16 +152,18 @@ export default function CouponsPage() {
                       {c.active ? 'Active' : 'Inactive'}
                     </span>
                   </td>
-                  <td className="px-4 py-3">
-                    <div className="flex gap-1">
-                      <button onClick={() => handleToggle(c)} className={`p-1.5 rounded-lg ${c.active ? 'text-green-500 hover:bg-green-50' : 'text-gray-400 hover:bg-gray-100'}`}>
-                        {c.active ? <ToggleRight size={16} /> : <ToggleLeft size={16} />}
-                      </button>
-                      <button onClick={() => handleDelete(c._id)} className="p-1.5 text-red-400 hover:bg-red-50 rounded-lg">
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  </td>
+                  {!readOnly && (
+                    <td className="px-4 py-3">
+                      <div className="flex gap-1">
+                        <button onClick={() => handleToggle(c)} className={`p-1.5 rounded-lg ${c.active ? 'text-green-500 hover:bg-green-50' : 'text-gray-400 hover:bg-gray-100'}`}>
+                          {c.active ? <ToggleRight size={16} /> : <ToggleLeft size={16} />}
+                        </button>
+                        <button onClick={() => handleDelete(c._id)} className="p-1.5 text-red-400 hover:bg-red-50 rounded-lg">
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

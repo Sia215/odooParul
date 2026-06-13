@@ -208,7 +208,7 @@ export default function ReportsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
+    <div className="flex flex-col bg-slate-50">
 
       {/* ── ZONE 2: FILTER BAR ── */}
       <div className="bg-white border-b border-gray-200 px-6 py-3 flex items-center gap-2 flex-wrap">

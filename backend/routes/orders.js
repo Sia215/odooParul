@@ -51,6 +51,12 @@ router.patch('/:id', authMiddleware, async (req, res) => {
       return res.status(403).json({ message: 'Paid orders cannot be modified.' });
 
     Object.assign(order, req.body);
+    // When marking as Paid, update sessionDate and cashier to the paying employee
+    if (req.body.status === 'Paid') {
+      order.sessionDate = new Date();
+      order.cashierId   = req.user.userId;
+      order.cashierName = req.user.name;
+    }
     await order.save();
     res.json(order);
   } catch (err) {

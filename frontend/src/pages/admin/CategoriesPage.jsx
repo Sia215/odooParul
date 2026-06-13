@@ -25,7 +25,7 @@ function ColorDots({ value, onChange }) {
   );
 }
 
-export default function CategoriesPage() {
+export default function CategoriesPage({ readOnly = false }) {
   const { categories, createCategory, updateCategory, deleteCategory } = useCategories();
   const [newName, setNewName]   = useState('');
   const [newColor, setNewColor] = useState('#6366f1');
@@ -69,18 +69,20 @@ export default function CategoriesPage() {
           <h1 className="text-xl font-semibold text-gray-900">Categories</h1>
           <p className="text-sm text-gray-500">{categories.length} categories</p>
         </div>
-        <button
-          onClick={() => setAdding(true)}
-          className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm rounded-lg font-medium"
-        >
-          <Plus size={15} /> Add Category
-        </button>
+        {!readOnly && (
+          <button
+            onClick={() => setAdding(true)}
+            className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm rounded-lg font-medium"
+          >
+            <Plus size={15} /> Add Category
+          </button>
+        )}
       </div>
 
       {error && <p className="text-xs text-red-500 bg-red-50 px-3 py-2 rounded-lg mb-4">{error}</p>}
 
       {/* Add form */}
-      {adding && (
+      {!readOnly && adding && (
         <form onSubmit={handleAdd} className="bg-white border border-indigo-200 rounded-2xl p-4 mb-4 flex flex-col gap-3">
           <p className="text-sm font-medium text-gray-700">New Category</p>
           <input
@@ -129,12 +131,16 @@ export default function CategoriesPage() {
                     <span className="w-4 h-4 rounded-full flex-shrink-0" style={{ backgroundColor: cat.color }} />
                     <span className="flex-1 text-sm font-medium text-gray-800">{cat.name}</span>
                     <span className="text-xs font-mono text-gray-400">{cat.color}</span>
-                    <button onClick={() => startEdit(cat)} className="p-1.5 text-indigo-400 hover:bg-indigo-50 rounded-lg">
-                      <Pencil size={14} />
-                    </button>
-                    <button onClick={() => handleDelete(cat._id)} className="p-1.5 text-red-400 hover:bg-red-50 rounded-lg">
-                      <Trash2 size={14} />
-                    </button>
+                    {!readOnly && (
+                      <>
+                        <button onClick={() => startEdit(cat)} className="p-1.5 text-indigo-400 hover:bg-indigo-50 rounded-lg">
+                          <Pencil size={14} />
+                        </button>
+                        <button onClick={() => handleDelete(cat._id)} className="p-1.5 text-red-400 hover:bg-red-50 rounded-lg">
+                          <Trash2 size={14} />
+                        </button>
+                      </>
+                    )}
                   </>
                 )}
               </li>

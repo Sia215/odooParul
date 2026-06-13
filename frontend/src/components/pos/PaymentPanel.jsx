@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Banknote, CreditCard, Smartphone, Delete, CheckCircle } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
+import { buildUpiLink } from '../../utils/upi';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -103,70 +105,80 @@ export default function PaymentPanel({ total, onNumpadInput, onModeChange, onCha
         </div>
       </div>
 
-      {/* ── Amount Display ── */}
-      <div className="px-3 py-2.5 bg-gray-50 border-b border-gray-100 shrink-0">
-        <div className="flex items-center justify-between mb-1">
-          <span className="text-xs text-gray-400">Amount Due</span>
-          <span className="text-xs text-gray-400">Entered</span>
+      {/* ── UPI QR Code ── */}
+      {activeMethod === 'upi' && payConfig?.upi?.upiId && (
+        <div className="flex-1 flex flex-col items-center justify-center gap-3 px-3 py-2">
+          <p className="text-xs text-violet-600 font-medium">Scan to Pay ₹{total.toFixed(2)}</p>
+          <div className="bg-white p-2 rounded-xl border-2 border-violet-200 shadow-sm">
+            <QRCodeSVG
+              value={buildUpiLink({ upiId: payConfig.upi.upiId, amount: total })}
+              size={160}
+              level="H"
+              includeMargin
+            />
+          </div>
+          <p className="text-xs font-mono text-violet-700 font-semibold">{payConfig.upi.upiId}</p>
+          <p className="text-xs text-gray-400">After customer pays, tap Charge below</p>
         </div>
-        <div className="flex items-center justify-between">
-          <span className="text-2xl font-extrabold text-gray-800">₹{total.toFixed(2)}</span>
-          <span className={`text-xl font-bold transition-colors
-            ${amountEntered ? 'text-indigo-600' : 'text-gray-300'}`}>
-            {amountEntered || '—'}
-          </span>
-        </div>
-        {amountEntered && parseFloat(amountEntered) >= total && (
-          <p className="text-xs text-emerald-600 font-medium mt-1">
-            Change: ₹{(parseFloat(amountEntered) - total).toFixed(2)}
-          </p>
-        )}
-      </div>
+      )}
 
-      {/* ── Numpad Mode Tabs ── */}
-      <div className="px-3 pt-2.5 shrink-0">
-        <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
-          {NUMPAD_MODES.map((mode) => (
-            <button
-              key={mode}
-              onClick={() => handleModeChange(mode)}
-              className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all
-                ${numpadMode === mode
-                  ? 'bg-white text-indigo-600 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-700'}`}
-            >
-              {mode}
-            </button>
-          ))}
-        </div>
-      </div>
+      {/* ── Numpad (hidden when UPI) ── */}
+      {activeMethod !== 'upi' && (
+        <>
+          {/* Amount Display */}
+          <div className="px-3 py-2.5 bg-gray-50 border-b border-gray-100 shrink-0">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-xs text-gray-400">Amount Due</span>
+              <span className="text-xs text-gray-400">Entered</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-2xl font-extrabold text-gray-800">₹{total.toFixed(2)}</span>
+              <span className={`text-xl font-bold transition-colors ${amountEntered ? 'text-indigo-600' : 'text-gray-300'}`}>
+                {amountEntered || '—'}
+              </span>
+            </div>
+            {amountEntered && parseFloat(amountEntered) >= total && (
+              <p className="text-xs text-emerald-600 font-medium mt-1">
+                Change: ₹{(parseFloat(amountEntered) - total).toFixed(2)}
+              </p>
+            )}
+          </div>
 
-      {/* ── Numpad Grid ── */}
-      <div className="flex-1 px-3 pb-3 pt-2">
-        <div className="grid grid-cols-3 gap-1.5 h-full">
-          {NUMPAD_KEYS.map((key) => (
-            <button
-              key={key}
-              onClick={() => handleNumpad(key)}
-              className={`flex items-center justify-center rounded-xl text-base font-bold transition-all active:scale-95
-                ${key === '⌫'
-                  ? 'bg-red-50 text-red-500 border border-red-100 hover:bg-red-100'
-                  : key === '+/-'
-                  ? 'bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-200'
-                  : 'bg-gray-50 text-gray-800 border border-gray-200 hover:bg-indigo-50 hover:border-indigo-200 hover:text-indigo-700'
-                }`}
-            >
-              {key === '⌫' ? <Delete size={16} /> : key}
-            </button>
-          ))}
-        </div>
-      </div>
+          {/* Numpad Mode Tabs */}
+          <div className="px-3 pt-2.5 shrink-0">
+            <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
+              {NUMPAD_MODES.map((mode) => (
+                <button key={mode} onClick={() => handleModeChange(mode)}
+                  className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all
+                    ${numpadMode === mode ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+                  {mode}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Numpad Grid */}
+          <div className="flex-1 px-3 pb-3 pt-2">
+            <div className="grid grid-cols-3 gap-1.5 h-full">
+              {NUMPAD_KEYS.map((key) => (
+                <button key={key} onClick={() => handleNumpad(key)}
+                  className={`flex items-center justify-center rounded-xl text-base font-bold transition-all active:scale-95
+                    ${key === '⌫' ? 'bg-red-50 text-red-500 border border-red-100 hover:bg-red-100'
+                    : key === '+/-' ? 'bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-200'
+                    : 'bg-gray-50 text-gray-800 border border-gray-200 hover:bg-indigo-50 hover:border-indigo-200 hover:text-indigo-700'}`}>
+                  {key === '⌫' ? <Delete size={16} /> : key}
+                </button>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
 
       {/* ── Charge Button ── */}
       <div className="px-3 pb-3 shrink-0">
         <button
           disabled={!activeMethod || total === 0}
-          onClick={() => { if (onFreeTable && currentTable?._id) onFreeTable(currentTable._id); onCharge?.(); }}
+          onClick={() => onCharge?.(activeMethod)}
           className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-200 disabled:text-gray-400 text-white rounded-xl text-sm font-bold transition-all shadow-md shadow-indigo-200 disabled:shadow-none active:scale-95"
         >
           {activeMethod ? `Charge ₹${total.toFixed(2)} · ${activeMethod.toUpperCase()}` : 'Select Payment Method'}

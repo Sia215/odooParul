@@ -131,7 +131,7 @@ function PasswordModal({ employee, onClose, authHeader }) {
 }
 
 // Main page
-export default function EmployeesPage() {
+export default function EmployeesPage({ readOnly = false }) {
   const { authHeader } = useAuth();
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading]     = useState(true);
@@ -183,10 +183,12 @@ export default function EmployeesPage() {
           <h1 className="text-xl font-semibold text-gray-900">Employees</h1>
           <p className="text-sm text-gray-500">{employees.length} accounts</p>
         </div>
-        <button onClick={() => setShowInvite(true)}
-          className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm rounded-lg font-medium">
-          <Plus size={15} /> Invite Employee
-        </button>
+        {!readOnly && (
+          <button onClick={() => setShowInvite(true)}
+            className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm rounded-lg font-medium">
+            <Plus size={15} /> Invite Employee
+          </button>
+        )}
       </div>
 
       <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
@@ -201,7 +203,7 @@ export default function EmployeesPage() {
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                {['Name', 'Email', 'Phone', 'Status', 'Actions'].map((h) => (
+                {['Name', 'Email', 'Phone', 'Status', ...(!readOnly ? ['Actions'] : [])].map((h) => (
                   <th key={h} className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">{h}</th>
                 ))}
               </tr>
@@ -217,22 +219,24 @@ export default function EmployeesPage() {
                       {emp.status}
                     </span>
                   </td>
-                  <td className="px-4 py-3">
-                    <div className="flex gap-1">
-                      <button onClick={() => setPwEmployee(emp)} title="Reset Password"
-                        className="p-1.5 text-indigo-400 hover:bg-indigo-50 rounded-lg">
-                        <KeyRound size={14} />
-                      </button>
-                      <button onClick={() => handleArchive(emp)} title={emp.status === 'ARCHIVED' ? 'Unarchive' : 'Archive'}
-                        className={`p-1.5 rounded-lg ${emp.status === 'ARCHIVED' ? 'text-green-500 hover:bg-green-50' : 'text-amber-400 hover:bg-amber-50'}`}>
-                        <Archive size={14} />
-                      </button>
-                      <button onClick={() => handleDelete(emp._id)} title="Delete"
-                        className="p-1.5 text-red-400 hover:bg-red-50 rounded-lg">
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  </td>
+                  {!readOnly && (
+                    <td className="px-4 py-3">
+                      <div className="flex gap-1">
+                        <button onClick={() => setPwEmployee(emp)} title="Reset Password"
+                          className="p-1.5 text-indigo-400 hover:bg-indigo-50 rounded-lg">
+                          <KeyRound size={14} />
+                        </button>
+                        <button onClick={() => handleArchive(emp)} title={emp.status === 'ARCHIVED' ? 'Unarchive' : 'Archive'}
+                          className={`p-1.5 rounded-lg ${emp.status === 'ARCHIVED' ? 'text-green-500 hover:bg-green-50' : 'text-amber-400 hover:bg-amber-50'}`}>
+                          <Archive size={14} />
+                        </button>
+                        <button onClick={() => handleDelete(emp._id)} title="Delete"
+                          className="p-1.5 text-red-400 hover:bg-red-50 rounded-lg">
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

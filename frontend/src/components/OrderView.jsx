@@ -20,10 +20,12 @@ export default function OrderView() {
   const [selectedItemId,   setSelectedItemId] = useState(null);
   const [sendingToKitchen, setSending]        = useState(false);
   const [kitchenMsg,       setKitchenMsg]     = useState(null);
+  const [editingOrderId,   setEditingOrderId] = useState(null); // track existing order being edited
 
   // Restore draft order into cart when editingOrder is set
   useEffect(() => {
     if (!editingOrder) return;
+    setEditingOrderId(editingOrder._id); // remember the order ID
     setCartItems(editingOrder.items.map((i) => ({
       _id:      i.productId || String(i.productId),
       name:     i.name,
@@ -149,8 +151,46 @@ export default function OrderView() {
   };
 
   // Called by PaymentPanel when charge is completed
-  const handleCharge = async (orderId) => {
-    if (currentTable?._id) await freeTable(currentTable._id);
+  const handleCharge = async (paymentMethod) => {
+    if (cartItems.length === 0) return;
+    try {
+      const orderPayload = {
+        items: cartItems.map(i => ({
+          productId: i._id,
+          name:      i.name,
+          price:     i.price,
+          qty:       i.qty,
+          category:  i.category || {},
+        })),
+        customer:      currentCustomer?.name || 'Walk-in',
+        table:         currentTable ? { number: String(currentTable.number), floor: currentTable.floor } : {},
+        subtotal,
+        taxAmt,
+        discountAmt:   totalDiscAmt + promoDiscAmt,
+        total:         grandTotal,
+        paymentMethod: paymentMethod || 'cash',
+        status:        'Paid',
+      };
+
+      if (editingOrderId) {
+        // PATCH existing order — keeps same order number
+        await fetch(`${API}/orders/${editingOrderId}`, {
+          method: 'PATCH', headers: getHeaders(), body: JSON.stringify(orderPayload),
+        });
+        setEditingOrderId(null);
+      } else {
+        // POST new order
+        await fetch(`${API}/orders`, {
+          method: 'POST', headers: getHeaders(), body: JSON.stringify(orderPayload),
+        });
+      }
+
+      if (currentTable?._id) await freeTable(currentTable._id);
+      setCartItems([]);
+      setSelectedItemId(null);
+    } catch (err) {
+      console.error('Charge failed:', err);
+    }
   };
 
   const handleNumpadInput = useCallback((value, mode) => {

@@ -25,7 +25,7 @@ function Toggle({ enabled, onChange }) {
   );
 }
 
-export default function PaymentMethodsPage() {
+export default function PaymentMethodsPage({ readOnly = false }) {
   const [config, setConfig]   = useState(DEFAULT);
   const [message, setMessage] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -108,26 +108,22 @@ export default function PaymentMethodsPage() {
               </div>
               <Toggle
                 enabled={config[key]?.enabled}
-                onChange={(val) => setMethod(key, { enabled: val })}
+                onChange={readOnly ? () => {} : (val) => setMethod(key, { enabled: val })}
               />
             </div>
 
             {/* UPI ID input — only shown when UPI card is expanded and enabled */}
             {key === 'upi' && config.upi.enabled && (
               <div className="mt-4 pt-4 border-t border-gray-100">
-                <label className="text-xs font-medium text-gray-700 block mb-1.5">
-                  Business UPI ID
-                </label>
+                <label className="text-xs font-medium text-gray-700 block mb-1.5">Business UPI ID</label>
                 <input
                   type="text"
                   value={config.upi.upiId}
-                  onChange={(e) => setMethod('upi', { upiId: e.target.value })}
+                  onChange={(e) => !readOnly && setMethod('upi', { upiId: e.target.value })}
+                  readOnly={readOnly}
                   placeholder="e.g. cafe@ybl"
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                  className={`w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none ${readOnly ? 'bg-gray-50 cursor-default' : 'focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100'}`}
                 />
-                <p className="text-xs text-gray-400 mt-1">
-                  This ID will be embedded in the QR code shown at checkout.
-                </p>
               </div>
             )}
           </div>
@@ -143,14 +139,16 @@ export default function PaymentMethodsPage() {
         </div>
       )}
 
-      <button
-        onClick={handleSave}
-        disabled={loading}
-        className="mt-5 flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg disabled:opacity-60"
-      >
-        <Save size={15} />
-        {loading ? 'Saving...' : 'Save Settings'}
-      </button>
+      {!readOnly && (
+        <button
+          onClick={handleSave}
+          disabled={loading}
+          className="mt-5 flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg disabled:opacity-60"
+        >
+          <Save size={15} />
+          {loading ? 'Saving...' : 'Save Settings'}
+        </button>
+      )}
     </div>
   );
 }

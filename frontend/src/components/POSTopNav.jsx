@@ -1,8 +1,8 @@
 import { useEffect, useRef } from 'react';
 import {
   ShoppingCart, ClipboardList, Users, LayoutGrid, Search,
-  MapPin, Menu, X, LogOut, ChefHat, BarChart2,
-  Tag, CreditCard, Ticket, Zap, UserCog, BookOpen, Coffee,
+  MapPin, Menu, X, LogOut, ChefHat,
+  Tag, CreditCard, Ticket, UserCog, Coffee,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { usePOS } from '../context/POSContext';
@@ -13,27 +13,25 @@ const NAV_TABS = [
   { id: 'orders',      label: 'Orders',     icon: ClipboardList },
   { id: 'customers',   label: 'Customer',   icon: Users },
   { id: 'table-view',  label: 'Table View', icon: LayoutGrid },
-  { id: 'reports',     label: 'Reports',    icon: BarChart2 },
 ];
 
-// ── Hamburger menu items ──────────────────────────────────────────
+// ── Hamburger menu items ──────────────────────────────────────────────────────────────────────────
 const MENU_SECTIONS = [
   {
     label: 'POS Operations',
     items: [
-      { id: 'kds',    label: 'Kitchen Display (KDS)', icon: ChefHat,   admin: false },
+      { id: 'kds',        label: 'Kitchen Display (KDS)', icon: ChefHat,      admin: false },
     ],
   },
   {
     label: 'Management',
     items: [
-      { id: 'products',   label: 'Products',           icon: ShoppingCart, admin: true },
-      { id: 'categories', label: 'Categories',         icon: Tag,          admin: true },
-      { id: 'payments',   label: 'Payment Methods',    icon: CreditCard,   admin: true },
-      { id: 'coupons',    label: 'Coupons & Promos',   icon: Ticket,       admin: true },
-      { id: 'booking',    label: 'Booking',            icon: BookOpen,     admin: true },
-      { id: 'employees',  label: 'Users / Employees',  icon: UserCog,      admin: true },
-      { id: 'reports',    label: 'Reports',            icon: BarChart2,    admin: false },
+      { id: 'products',   label: 'Products',              icon: ShoppingCart, admin: false },
+      { id: 'categories', label: 'Categories',            icon: Tag,          admin: false },
+      { id: 'payments',   label: 'Payment Methods',       icon: CreditCard,   admin: false },
+      { id: 'coupons',    label: 'Coupons & Promos',      icon: Ticket,       admin: false },
+      { id: 'employees',  label: 'Users / Employees',     icon: UserCog,      admin: false },
+
     ],
   },
 ];

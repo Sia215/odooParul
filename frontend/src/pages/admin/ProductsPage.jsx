@@ -4,7 +4,7 @@ import ProductForm from '../../components/admin/ProductForm';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-export default function ProductsPage() {
+export default function ProductsPage({ readOnly = false }) {
   const [products, setProducts] = useState([]);
   const [editing, setEditing]   = useState(null);   // null=closed, false=new, object=edit
   const [loading, setLoading]   = useState(true);
@@ -41,12 +41,14 @@ export default function ProductsPage() {
           <h1 className="text-xl font-semibold text-gray-900">Products</h1>
           <p className="text-sm text-gray-500">{products.length} items</p>
         </div>
-        <button
-          onClick={() => setEditing(false)}
-          className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm rounded-lg font-medium"
-        >
-          <Plus size={15} /> Add Product
-        </button>
+        {!readOnly && (
+          <button
+            onClick={() => setEditing(false)}
+            className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm rounded-lg font-medium"
+          >
+            <Plus size={15} /> Add Product
+          </button>
+        )}
       </div>
 
       {/* Table */}
@@ -59,7 +61,7 @@ export default function ProductsPage() {
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                {['Name', 'Category', 'Price', 'Unit', 'Tax', 'Actions'].map((h) => (
+                {['Name', 'Category', 'Price', 'Unit', 'Tax', ...(!readOnly ? ['Actions'] : [])].map((h) => (
                   <th key={h} className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">
                     {h}
                   </th>
@@ -81,16 +83,18 @@ export default function ProductsPage() {
                   <td className="px-4 py-3 text-gray-700">₹{Number(p.price).toFixed(2)}</td>
                   <td className="px-4 py-3 text-gray-500">{p.unit}</td>
                   <td className="px-4 py-3 text-gray-500">{p.tax}%</td>
-                  <td className="px-4 py-3">
-                    <div className="flex gap-2">
-                      <button onClick={() => setEditing(p)} className="p-1.5 rounded-lg hover:bg-indigo-50 text-indigo-500">
-                        <Pencil size={14} />
-                      </button>
-                      <button onClick={() => handleDelete(p._id)} className="p-1.5 rounded-lg hover:bg-red-50 text-red-400">
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  </td>
+                  {!readOnly && (
+                    <td className="px-4 py-3">
+                      <div className="flex gap-2">
+                        <button onClick={() => setEditing(p)} className="p-1.5 rounded-lg hover:bg-indigo-50 text-indigo-500">
+                          <Pencil size={14} />
+                        </button>
+                        <button onClick={() => handleDelete(p._id)} className="p-1.5 rounded-lg hover:bg-red-50 text-red-400">
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
@@ -99,7 +103,7 @@ export default function ProductsPage() {
       </div>
 
       {/* Slide-in Form Panel */}
-      {editing !== null && (
+      {!readOnly && editing !== null && (
         <div className="fixed inset-0 z-40 flex">
           <div className="flex-1 bg-black/20" onClick={() => setEditing(null)} />
           <div className="w-full max-w-md bg-white shadow-2xl flex flex-col h-full overflow-y-auto">
