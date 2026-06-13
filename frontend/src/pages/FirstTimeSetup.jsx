@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Eye, EyeOff, KeyRound, CheckCircle } from 'lucide-react';
 
-const API = import.meta.env.VITE_API_URL;
+const API = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 export default function FirstTimeSetup({ userId, name, onComplete }) {
   const [password, setPassword]   = useState('');

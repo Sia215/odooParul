@@ -3,7 +3,7 @@ import { Plus } from 'lucide-react';
 import { useCategories } from '../../context/CategoryContext';
 import QuickCategoryModal from '../QuickCategoryModal';
 
-const API   = import.meta.env.VITE_API_URL;
+const API   = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 const UNITS = ['per piece', 'per kg', 'per litre', 'per dozen', 'per plate'];
 const EMPTY = { name: '', category: '', price: '', unit: 'per piece', tax: '0', description: '' };
 

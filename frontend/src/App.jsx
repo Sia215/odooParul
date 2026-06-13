@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { CategoryProvider } from './context/CategoryContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import KDSPage from './pages/KDSPage';
 import LoginCard from './components/LoginCard';
 import SignUpCard from './components/SignUpCard';
 import FirstTimeSetup from './pages/FirstTimeSetup';
@@ -113,6 +114,8 @@ function AppRouter() {
 }
 
 export default function App() {
+  // /kds is auth-free — check before any auth context
+  if (window.location.pathname === '/kds') return <KDSPage />;
   return (
     <AuthProvider>
       <AppRouter />

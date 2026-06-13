@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Eye, EyeOff, Mail, Lock, LogIn, ArrowRight } from 'lucide-react';
 
-const API = import.meta.env.VITE_API_URL;
+const API = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 export default function LoginCard({ onSwitchToSignUp, onLogin }) {
   const [step, setStep]         = useState('email'); // 'email' | 'password'

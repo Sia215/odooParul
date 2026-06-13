@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Plus, Trash2, ToggleLeft, ToggleRight, Tag } from 'lucide-react';
 
-const API = import.meta.env.VITE_API_URL;
+const API = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 const EMPTY = { code: '', discountType: 'percentage', discountValue: '', active: true, expiresAt: '', usageLimit: '' };
 
 export default function CouponsPage() {

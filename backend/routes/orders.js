@@ -33,11 +33,9 @@ router.get('/:id', authMiddleware, async (req, res) => {
 // POST /api/orders  — create new order (Draft or Paid)
 router.post('/', authMiddleware, async (req, res) => {
   try {
-    const order = await Order.create({
-      ...req.body,
-      cashierId:   req.user.userId,
-      cashierName: req.user.name,
-    });
+    const { orderNumber: _ignored, ...body } = req.body;
+    const order = new Order({ ...body, cashierId: req.user.userId, cashierName: req.user.name });
+    await order.save();
     res.status(201).json(order);
   } catch (err) {
     res.status(400).json({ message: err.message });

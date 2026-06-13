@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useReducer, useRef } from 'react';
 
-const API = import.meta.env.VITE_API_URL;
+const API = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 const WS_URL = API.replace('http', 'ws').replace('/api', '');
 
 const CategoryContext = createContext(null);

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Plus, Pencil, Trash2, Check, X, ToggleLeft, ToggleRight, Users, Building2 } from 'lucide-react';
 
-const API = import.meta.env.VITE_API_URL;
+const API = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 // ── Inline editable row for a table ────────────────────────────
 function TableRow({ table, onUpdate, onDelete, onToggle }) {

@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Trash2, Tag, Zap, X, Plus, Minus, ShoppingCart } from 'lucide-react';
 
-const API = import.meta.env.VITE_API_URL;
+const API = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 // Debounce helper
 function useDebounce(value, delay) {

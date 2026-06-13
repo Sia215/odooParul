@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Plus, Trash2, Zap, ToggleLeft, ToggleRight } from 'lucide-react';
 
-const API = import.meta.env.VITE_API_URL;
+const API = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 const EMPTY = { name: '', triggerType: 'order', productId: '', minQty: '', minOrderAmount: '', discountType: 'percentage', discountValue: '', active: true };
 
 export default function PromotionsPage() {

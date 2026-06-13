@@ -12,6 +12,7 @@ export default function CartPanel({
   couponLoading, couponError, couponSuccess,
   itemPromos, orderPromo,
   currentCustomer, onOpenCustomers, onUnlinkCustomer,
+  onSendToKitchen, sendingToKitchen,
 }) {
   const [showDiscountModal, setShowDiscountModal] = useState(false);
 
@@ -120,8 +121,12 @@ export default function CartPanel({
       {/* ── Send to Kitchen ── */}
       {cartItems.length > 0 && (
         <div className="px-3 pt-2 shrink-0">
-          <button className="w-full flex items-center justify-center gap-2 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-sm font-semibold transition-colors shadow-sm shadow-amber-200 active:scale-95">
-            <ChefHat size={15} /> Send to Kitchen
+          <button
+            onClick={onSendToKitchen}
+            disabled={sendingToKitchen}
+            className="w-full flex items-center justify-center gap-2 py-2.5 bg-amber-500 hover:bg-amber-600 disabled:opacity-60 text-white rounded-xl text-sm font-semibold transition-colors shadow-sm shadow-amber-200 active:scale-95">
+            <ChefHat size={15} />
+            {sendingToKitchen ? 'Sending…' : 'Send to Kitchen'}
           </button>
         </div>
       )}

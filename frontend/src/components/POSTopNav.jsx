@@ -60,6 +60,7 @@ export default function POSTopNav() {
 
   const handleMenuItemClick = (item) => {
     if (item.admin) { requireAdmin(); return; }
+    if (item.id === 'kds') { window.open('/kds', '_blank'); setIsMenuOpen(false); return; }
     navigate(item.id);
   };
 

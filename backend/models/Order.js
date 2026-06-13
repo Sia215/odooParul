@@ -9,7 +9,7 @@ const orderItemSchema = new mongoose.Schema({
 }, { _id: false });
 
 const orderSchema = new mongoose.Schema({
-  orderNumber: { type: String, required: true, unique: true },
+  orderNumber: { type: String, unique: true },
   customer:    { type: String, default: 'Walk-in' },
   table:       { number: String, floor: String },
   items:       [orderItemSchema],
@@ -19,17 +19,19 @@ const orderSchema = new mongoose.Schema({
   total:       { type: Number, required: true },
   couponCode:  { type: String, default: null },
   status:      { type: String, enum: ['Draft', 'Paid', 'Cancelled'], default: 'Draft' },
+  kdsStage:    { type: String, enum: ['to_cook', 'preparing', 'completed', 'archived'], default: null },
+  kdsSentAt:   { type: Date, default: null },
+  kdsItemsDone: { type: [String], default: [] }, // array of item index strings marked done
   cashierId:   { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   cashierName: { type: String },
   sessionDate: { type: Date, default: Date.now },
 }, { timestamps: true });
 
 // Auto-generate order number before save
-orderSchema.pre('save', async function (next) {
-  if (!this.isNew) return next();
+orderSchema.pre('save', async function () {
+  if (!this.isNew || this.orderNumber) return;
   const count = await mongoose.model('Order').countDocuments();
   this.orderNumber = `ORD-${String(count + 1).padStart(4, '0')}`;
-  next();
 });
 
 module.exports = mongoose.model('Order', orderSchema);

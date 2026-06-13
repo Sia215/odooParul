@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { X, Building2, Users, RefreshCw, CheckCircle, Clock, Coffee } from 'lucide-react';
 import { usePOS } from '../context/POSContext';
 
-const API = import.meta.env.VITE_API_URL;
+const API = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 // ── Individual table card ─────────────────────────────────────────
 function TableCard({ table, floorName, isSelected, isOccupied, onSelect }) {

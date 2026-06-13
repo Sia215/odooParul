@@ -6,6 +6,7 @@ import { usePOS }   from '../context/POSContext';
 import useDiscount  from '../hooks/useDiscount';
 import usePromotions from '../hooks/usePromotions';
 
+const API = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 const DEFAULT_TAX = 5;
 
 export default function OrderView() {
@@ -13,6 +14,8 @@ export default function OrderView() {
 
   const [cartItems,      setCartItems]      = useState([]);
   const [selectedItemId, setSelectedItemId] = useState(null);
+  const [sendingToKitchen, setSending]      = useState(false);
+  const [kitchenMsg, setKitchenMsg]         = useState(null);
 
   // Restore draft order into cart when editingOrder is set
   useEffect(() => {
@@ -68,6 +71,58 @@ export default function OrderView() {
   // Grand total including promo savings
   const grandTotal = Math.max(0, finalTotal - promoDiscAmt);
 
+  // ── Send to Kitchen ────────────────────────────────────────────
+  const handleSendToKitchen = async () => {
+    if (cartItems.length === 0) return;
+    setSending(true);
+    setKitchenMsg(null);
+    try {
+      // Step 1: save/create a Draft order
+      const orderPayload = {
+        items: cartItems.map(i => ({
+          productId: i._id,
+          name:      i.name,
+          price:     i.price,
+          qty:       i.qty,
+          category:  i.category || {},
+        })),
+        customer:    currentCustomer?.name || 'Walk-in',
+        table:       {},
+        subtotal,
+        taxAmt,
+        discountAmt: totalDiscAmt + promoDiscAmt,
+        total:       grandTotal,
+        status:      'Draft',
+      };
+
+      const token = JSON.parse(localStorage.getItem('pos_session') || '{}')?.token;
+      const headers = { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) };
+
+      const orderRes = await fetch(`${API}/orders`, {
+        method: 'POST', headers, body: JSON.stringify(orderPayload),
+      });
+      const order = await orderRes.json();
+      if (!orderRes.ok) throw new Error(order.message || 'Failed to save order');
+
+      // Step 2: send to KDS — use same base URL
+      const kdsRes = await fetch(`${API.replace('/api','')}/api/kds/orders/${order._id}/send`, {
+        method: 'POST', headers,
+      });
+      if (!kdsRes.ok) {
+        const kdsErr = await kdsRes.json().catch(() => ({}));
+        throw new Error(kdsErr.message || 'Failed to send to kitchen');
+      }
+
+      setKitchenMsg({ ok: true, text: `✓ ${order.orderNumber} sent to kitchen!` });
+      setCartItems([]);
+      setTimeout(() => setKitchenMsg(null), 3000);
+    } catch (err) {
+      setKitchenMsg({ ok: false, text: err.message });
+    } finally {
+      setSending(false);
+    }
+  };
+
   // ── Numpad → mutate selected item ──────────────────────────────
   const handleNumpadInput = useCallback((value, mode) => {
     if (!selectedItemId) return;
@@ -93,6 +148,12 @@ export default function OrderView() {
 
       {/* ── Col 2: Cart ── */}
       <div className="w-72 xl:w-80 shrink-0 overflow-hidden border-r border-gray-100 flex flex-col">
+        {kitchenMsg && (
+          <div className={`mx-3 mt-2 px-3 py-2 rounded-lg text-xs font-semibold text-center
+            ${kitchenMsg.ok ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-red-50 text-red-600 border border-red-200'}`}>
+            {kitchenMsg.text}
+          </div>
+        )}
         <CartPanel
           cartItems={cartItems}
           onIncrement={handleIncrement}
@@ -119,6 +180,8 @@ export default function OrderView() {
           currentCustomer={currentCustomer}
           onOpenCustomers={() => navigate('customers')}
           onUnlinkCustomer={unlinkCustomer}
+          onSendToKitchen={handleSendToKitchen}
+          sendingToKitchen={sendingToKitchen}
         />
       </div>
 

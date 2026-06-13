@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Plus, Trash2, Archive, KeyRound, X, UserPlus, Users } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
-const API = import.meta.env.VITE_API_URL;
+const API = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 const STATUS_STYLES = {
   PENDING:  'bg-yellow-100 text-yellow-700',

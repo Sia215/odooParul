@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { X, Users, Building2 } from 'lucide-react';
 
-const API = import.meta.env.VITE_API_URL;
+const API = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 // Visual seat dots — shows up to 8 dots, then shows count
 function SeatVisual({ seats }) {
