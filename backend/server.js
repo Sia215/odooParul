@@ -17,6 +17,8 @@ const couponRoutes         = require('./routes/coupons');
 const promotionRoutes      = require('./routes/promotions');
 const posRoutes            = require('./routes/pos');
 const employeeRoutes       = require('./routes/employees');
+const orderRoutes          = require('./routes/orders');
+const customerRoutes       = require('./routes/customers');
 
 const app    = express();
 const server = http.createServer(app);
@@ -48,13 +50,12 @@ app.use('/api/coupons', couponRoutes);
 app.use('/api/promotions', promotionRoutes);
 app.use('/api/pos', posRoutes);
 app.use('/api/employees', employeeRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/api/customers', customerRoutes);
 
 // Serve React build — only for non-API routes
 app.use(express.static(path.join(__dirname, 'public')));
-app.get('*path', (req, res) => {
-  if (req.path.startsWith('/api')) {
-    return res.status(404).json({ message: 'API route not found' });
-  }
+app.get(/^(?!\/api).*$/, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 

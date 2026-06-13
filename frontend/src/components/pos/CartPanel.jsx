@@ -1,17 +1,17 @@
 import { useState } from 'react';
-import { Trash2, ChefHat, User, Tag, Send, ShoppingCart, X, Percent, Zap } from 'lucide-react';
+import { Trash2, ChefHat, User, Tag, Send, ShoppingCart, Percent, Zap, X } from 'lucide-react';
 import DiscountModal from './DiscountModal';
 
 export default function CartPanel({
   cartItems, onIncrement, onDecrement, onRemove,
   onSelectItem, selectedItemId,
-  // Totals from useDiscount + usePromotions
   subtotal, taxAmt, tax,
   couponDiscAmt, manualDiscAmt, promoDiscAmt,
   totalDiscAmt, finalTotal,
   coupon, onApplyCoupon, onRemoveCoupon,
   couponLoading, couponError, couponSuccess,
   itemPromos, orderPromo,
+  currentCustomer, onOpenCustomers, onUnlinkCustomer,
 }) {
   const [showDiscountModal, setShowDiscountModal] = useState(false);
 
@@ -101,6 +101,22 @@ export default function CartPanel({
         )}
       </div>
 
+      {/* ── Customer badge ── */}
+      {currentCustomer && (
+        <div className="mx-3 mt-2 flex items-center gap-2 bg-indigo-50 border border-indigo-200 rounded-xl px-3 py-2 shrink-0">
+          <div className="w-6 h-6 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
+            {currentCustomer.name[0].toUpperCase()}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-semibold text-indigo-700 truncate">{currentCustomer.name}</p>
+            {currentCustomer.email && <p className="text-[10px] text-indigo-400 truncate">{currentCustomer.email}</p>}
+          </div>
+          <button onClick={onUnlinkCustomer} className="p-0.5 text-indigo-300 hover:text-red-400 transition-colors">
+            <X size={12} />
+          </button>
+        </div>
+      )}
+
       {/* ── Send to Kitchen ── */}
       {cartItems.length > 0 && (
         <div className="px-3 pt-2 shrink-0">
@@ -113,8 +129,15 @@ export default function CartPanel({
       {/* ── Quick Actions ── */}
       {cartItems.length > 0 && (
         <div className="px-3 pt-2 grid grid-cols-3 gap-1.5 shrink-0">
-          <button className="flex items-center justify-center gap-1.5 py-1.5 rounded-lg border border-gray-200 text-xs text-gray-500 hover:bg-gray-50 hover:text-gray-700 hover:border-gray-300 transition-colors">
-            <User size={12} /> Customer
+          <button
+            onClick={onOpenCustomers}
+            className={`flex items-center justify-center gap-1.5 py-1.5 rounded-lg border text-xs font-medium transition-colors
+              ${currentCustomer
+                ? 'bg-indigo-50 border-indigo-300 text-indigo-600 hover:bg-indigo-100'
+                : 'border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-gray-700 hover:border-gray-300'}`}
+          >
+            <User size={12} />
+            {currentCustomer ? currentCustomer.name.split(' ')[0] : 'Customer'}
           </button>
           <button
             onClick={() => setShowDiscountModal(true)}

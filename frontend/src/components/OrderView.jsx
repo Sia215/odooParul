@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import ProductGrid  from './pos/ProductGrid';
 import CartPanel    from './pos/CartPanel';
 import PaymentPanel from './pos/PaymentPanel';
@@ -6,14 +6,27 @@ import { usePOS }   from '../context/POSContext';
 import useDiscount  from '../hooks/useDiscount';
 import usePromotions from '../hooks/usePromotions';
 
-const DEFAULT_TAX = 5; // GST 5%
+const DEFAULT_TAX = 5;
 
 export default function OrderView() {
-  const { searchQuery } = usePOS();
+  const { searchQuery, editingOrder, setEditingOrder, currentCustomer, unlinkCustomer, navigate } = usePOS();
 
-  // ── Cart State ──────────────────────────────────────────────────
   const [cartItems,      setCartItems]      = useState([]);
   const [selectedItemId, setSelectedItemId] = useState(null);
+
+  // Restore draft order into cart when editingOrder is set
+  useEffect(() => {
+    if (!editingOrder) return;
+    setCartItems(editingOrder.items.map((i) => ({
+      _id:      i.productId || String(i.productId),
+      name:     i.name,
+      price:    i.price,
+      qty:      i.qty,
+      category: i.category,
+    })));
+    setSelectedItemId(null);
+    setEditingOrder(null);
+  }, [editingOrder]);
 
   const handleAddToCart = useCallback((product) => {
     setCartItems((prev) => {
@@ -103,6 +116,9 @@ export default function OrderView() {
           couponSuccess={couponSuccess}
           itemPromos={itemPromos}
           orderPromo={orderPromo}
+          currentCustomer={currentCustomer}
+          onOpenCustomers={() => navigate('customers')}
+          onUnlinkCustomer={unlinkCustomer}
         />
       </div>
 
