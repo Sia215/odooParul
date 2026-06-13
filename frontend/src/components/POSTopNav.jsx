@@ -44,7 +44,7 @@ export default function POSTopNav() {
     currentTable,
     searchQuery, setSearchQuery,
     isMenuOpen, setIsMenuOpen,
-    requireAdmin,
+    requireAdmin, openTableModal,
   } = usePOS();
 
   const menuRef = useRef(null);
@@ -80,7 +80,7 @@ export default function POSTopNav() {
         {NAV_TABS.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
-            onClick={() => navigate(id)}
+            onClick={() => id === 'table-view' ? openTableModal() : navigate(id)}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap
               ${activeView === id
                 ? 'bg-indigo-600 text-white'

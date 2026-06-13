@@ -1,7 +1,8 @@
+import { useEffect } from 'react';
 import { POSProvider, usePOS } from '../context/POSContext';
 import POSTopNav from '../components/POSTopNav';
 import AdminBlockModal from '../components/AdminBlockModal';
-import TableView from '../components/TableView';
+import TableSelectorModal from '../components/TableView';
 import { ShoppingCart, ClipboardList, Users, ChefHat } from 'lucide-react';
 
 // ── Placeholder for views not yet built ───────────────────────────
@@ -33,17 +34,20 @@ function ViewPlaceholder() {
 }
 
 function POSShell() {
-  const { activeView, adminBlockModal } = usePOS();
+  const { activeView, adminBlockModal, tableModal, currentTable, openTableModal } = usePOS();
+
+  // Auto-open table picker on first load if no table is bound
+  useEffect(() => {
+    if (!currentTable) openTableModal();
+  }, []);
 
   return (
     <div className="h-screen flex flex-col bg-gray-50 overflow-hidden">
       <POSTopNav />
       <main className="flex-1 overflow-y-auto flex flex-col">
-        {activeView === 'table-view'
-          ? <TableView />
-          : <ViewPlaceholder />
-        }
+        <ViewPlaceholder />
       </main>
+      {tableModal    && <TableSelectorModal />}
       {adminBlockModal && <AdminBlockModal />}
     </div>
   );
