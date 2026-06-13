@@ -98,8 +98,8 @@ router.post('/:id/send-bill', authMiddleware, async (req, res) => {
 <body style="margin:0;padding:0;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
 <div style="max-width:500px;margin:32px auto;background:white;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08)">
   <div style="background:linear-gradient(135deg,#4f46e5,#7c3aed);padding:24px 28px">
-    <div style="font-size:20px;font-weight:800;color:white">&#9749; Odoo Cafe</div>
-    <div style="color:rgba(255,255,255,0.75);font-size:13px;margin-top:4px">Order Bill &middot; ${order.orderNumber}</div>
+    <div style="font-size:20px;font-weight:800;color:white">&#9749; The Velvet Bean Co.</div>
+    <div style="color:rgba(255,255,255,0.75);font-size:13px;margin-top:4px">Artisan Roasters &amp; Kitchen &middot; ${order.orderNumber}</div>
   </div>
   <div style="padding:24px 28px">
     <table style="width:100%;font-size:13px;border-collapse:collapse;margin-bottom:20px">
@@ -133,7 +133,7 @@ router.post('/:id/send-bill', authMiddleware, async (req, res) => {
     </div>
   </div>
   <div style="background:#f8fafc;padding:14px 28px;text-align:center;font-size:11px;color:#94a3b8;border-top:1px solid #e2e8f0">
-    Thank you for visiting Odoo Cafe! &#9749;
+    Thank you for visiting The Velvet Bean Co.! &#9749;
   </div>
 </div>
 </body></html>`;
@@ -142,7 +142,7 @@ router.post('/:id/send-bill', authMiddleware, async (req, res) => {
     await transporter.sendMail({
       from: `"Odoo Cafe" <${process.env.EMAIL_USER}>`,
       to,
-      subject: `Your Bill from Odoo Cafe — ${order.orderNumber} — ${INR(order.total)}`,
+      subject: `Your Bill from The Velvet Bean Co. — ${order.orderNumber} — ${INR(order.total)}`,
       html,
     });
     res.json({ message: `Bill sent to ${to}` });

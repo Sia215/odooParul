@@ -6,6 +6,7 @@ import { usePOS }   from '../context/POSContext';
 import useDiscount  from '../hooks/useDiscount';
 import usePromotions from '../hooks/usePromotions';
 import { CheckCircle, X, Mail, Printer } from 'lucide-react';
+import { BRAND_NAME, BRAND_SUBTITLE, BRAND_EMOJI } from '../utils/brand';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 const DEFAULT_TAX = 5;
@@ -21,7 +22,8 @@ function BillModal({ order, customerEmail, onClose, onSendMail, sending, sent })
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
           <div>
-            <p className="font-bold text-gray-900">☕ Odoo Cafe</p>
+            <p className="font-bold text-gray-900">{BRAND_EMOJI} {BRAND_NAME}</p>
+            <p className="text-xs" style={{ color: '#A8A29E' }}>{BRAND_SUBTITLE}</p>
             <p className="text-xs text-gray-400">{order.orderNumber} · {new Date(order.sessionDate || Date.now()).toLocaleString()}</p>
           </div>
           <button onClick={onClose} className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg">

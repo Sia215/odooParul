@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { usePOS } from '../context/POSContext';
+import { BRAND_NAME, BRAND_SUBTITLE } from '../utils/brand';
 
 const NAV_TABS = [
   { id: 'pos-order',  label: 'POS Order',  icon: ShoppingCart },
@@ -79,8 +80,8 @@ export default function POSTopNav() {
       <div className="flex items-center gap-2.5 pr-4 shrink-0 border-r" style={{ borderColor: '#D6D3D1' }}>
         <BrandMark />
         <div className="hidden sm:block">
-          <p className="font-black text-sm leading-none" style={{ color: '#2E1A12', fontFamily: 'Georgia, serif' }}>The Velvet Bean Co.</p>
-          <p className="text-[9px] font-semibold uppercase tracking-widest leading-none mt-0.5" style={{ color: '#9A3412' }}>Artisan Roasters & Kitchen</p>
+          <p className="font-black text-sm leading-none" style={{ color: '#2E1A12', fontFamily: 'Georgia, serif' }}>{BRAND_NAME}</p>
+          <p className="text-[9px] font-semibold uppercase tracking-widest leading-none mt-0.5" style={{ color: '#9A3412' }}>{BRAND_SUBTITLE}</p>
         </div>
       </div>
 
