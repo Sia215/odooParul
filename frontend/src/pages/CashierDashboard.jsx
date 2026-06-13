@@ -1,22 +1,21 @@
 import { POSProvider, usePOS } from '../context/POSContext';
 import POSTopNav from '../components/POSTopNav';
 import AdminBlockModal from '../components/AdminBlockModal';
-import { ShoppingCart, ClipboardList, Users, LayoutGrid, ChefHat } from 'lucide-react';
+import TableView from '../components/TableView';
+import { ShoppingCart, ClipboardList, Users, ChefHat } from 'lucide-react';
 
-// ── Placeholder views ─────────────────────────────────────────────
-const VIEW_META = {
-  'pos-order':  { icon: ShoppingCart, label: 'POS Order',             sub: 'Select products and build the order.' },
-  'orders':     { icon: ClipboardList, label: 'Orders',               sub: 'View and manage shift order history.' },
-  'customers':  { icon: Users,         label: 'Customer',             sub: 'Search, register, and manage customers.' },
-  'table-view': { icon: LayoutGrid,    label: 'Table / Floor View',   sub: 'Select an active table from the floor plan.' },
-  'kds':        { icon: ChefHat,       label: 'Kitchen Display (KDS)', sub: 'Live kitchen ticket queue.' },
+// ── Placeholder for views not yet built ───────────────────────────
+const PLACEHOLDER_META = {
+  'pos-order': { icon: ShoppingCart,  label: 'POS Order',              sub: 'Select products and build the order.' },
+  'orders':    { icon: ClipboardList, label: 'Orders',                 sub: 'View and manage shift order history.' },
+  'customers': { icon: Users,         label: 'Customer',               sub: 'Search, register, and manage customers.' },
+  'kds':       { icon: ChefHat,       label: 'Kitchen Display (KDS)',   sub: 'Live kitchen ticket queue.' },
 };
 
 function ViewPlaceholder() {
   const { activeView, searchQuery } = usePOS();
-  const meta = VIEW_META[activeView] || VIEW_META['pos-order'];
+  const meta = PLACEHOLDER_META[activeView];
   const Icon = meta.icon;
-
   return (
     <div className="flex-1 flex flex-col items-center justify-center gap-3 text-center p-8">
       <div className="w-16 h-16 rounded-2xl bg-indigo-50 flex items-center justify-center">
@@ -34,13 +33,16 @@ function ViewPlaceholder() {
 }
 
 function POSShell() {
-  const { adminBlockModal } = usePOS();
+  const { activeView, adminBlockModal } = usePOS();
 
   return (
     <div className="h-screen flex flex-col bg-gray-50 overflow-hidden">
       <POSTopNav />
       <main className="flex-1 overflow-y-auto flex flex-col">
-        <ViewPlaceholder />
+        {activeView === 'table-view'
+          ? <TableView />
+          : <ViewPlaceholder />
+        }
       </main>
       {adminBlockModal && <AdminBlockModal />}
     </div>
