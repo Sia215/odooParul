@@ -3,21 +3,93 @@ import { Search, X, Package } from 'lucide-react';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
+// Food emoji fallback map
+const EMOJI_MAP = [
+  { keys: ['coffee','cafe','cappuccino','latte','espresso','mocha'], emoji: '☕' },
+  { keys: ['tea','chai'], emoji: '🍵' },
+  { keys: ['pizza'], emoji: '🍕' },
+  { keys: ['burger','sandwich'], emoji: '🍔' },
+  { keys: ['pasta','noodle','spaghetti'], emoji: '🍝' },
+  { keys: ['rice','biryani','pulao'], emoji: '🍚' },
+  { keys: ['roti','rotali','chapati','naan','bread'], emoji: '🫓' },
+  { keys: ['sprite','soda','cold drink','cola','pepsi','coke','juice','drink'], emoji: '🥤' },
+  { keys: ['cake','dessert','sweet','ice cream','kulfi'], emoji: '🍰' },
+  { keys: ['fries','chips','snack'], emoji: '🍟' },
+  { keys: ['salad'], emoji: '🥗' },
+  { keys: ['soup'], emoji: '🍜' },
+  { keys: ['chicken','butter chicken','tikka'], emoji: '🍗' },
+  { keys: ['fish','seafood'], emoji: '🐟' },
+  { keys: ['egg'], emoji: '🍳' },
+  { keys: ['veg','vegetable','sabzi'], emoji: '🥦' },
+  { keys: ['dal','lentil'], emoji: '🫘' },
+  { keys: ['milk','shake','lassi','smoothie'], emoji: '🥛' },
+  { keys: ['water'], emoji: '💧' },
+];
+
+function getEmoji(name) {
+  const lower = name.toLowerCase();
+  for (const { keys, emoji } of EMOJI_MAP) {
+    if (keys.some(k => lower.includes(k))) return emoji;
+  }
+  return '🍽️';
+}
+
+// Fetch from TheMealDB, fallback to emoji
+async function fetchFoodImage(name) {
+  try {
+    const terms = [name, name.split(' ')[0], name.split(' ').pop()];
+    for (const term of terms) {
+      const res  = await fetch(`https://www.themealdb.com/api/json/v1/1/search.php?s=${encodeURIComponent(term)}`);
+      const data = await res.json();
+      if (data.meals?.[0]?.strMealThumb) return data.meals[0].strMealThumb;
+    }
+  } catch (_) {}
+  return null;
+}
+
+function ProductImage({ name, size = 'card' }) {
+  const [src, setSrc] = useState(null);
+  const [tried, setTried] = useState(false);
+
+  useEffect(() => {
+    fetchFoodImage(name).then(url => { setSrc(url); setTried(true); });
+  }, [name]);
+
+  const h = size === 'card' ? 'h-24' : 'h-10 w-10';
+  const emoji = getEmoji(name);
+
+  // Show emoji placeholder while loading or if no image found
+  if (!src) return (
+    <div className={`${size === 'card' ? 'w-full h-24' : 'w-10 h-10 rounded-lg shrink-0'} bg-gradient-to-br from-indigo-50 to-purple-50 flex items-center justify-center`}>
+      <span className={size === 'card' ? 'text-4xl' : 'text-xl'}>{emoji}</span>
+    </div>
+  );
+
+  return size === 'card'
+    ? <img src={src} alt={name} className="w-full h-24 object-cover group-hover:scale-105 transition-transform duration-300" />
+    : <img src={src} alt={name} className="w-10 h-10 rounded-lg object-cover shrink-0" />;
+}
+
 function ProductCard({ product, onAdd }) {
   const color = product.category?.color || '#6366f1';
   return (
     <button
       onClick={() => onAdd(product)}
-      className="group bg-white rounded-2xl border border-gray-200 p-3 flex flex-col gap-2 hover:border-indigo-400 hover:shadow-md transition-all duration-150 text-left active:scale-95"
+      className="group bg-white rounded-2xl border border-gray-200 overflow-hidden flex flex-col hover:border-indigo-400 hover:shadow-md transition-all duration-150 text-left active:scale-95"
     >
-      <div className="flex items-center gap-1.5">
-        <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: color }} />
-        <span className="text-[10px] text-gray-400 truncate">{product.category?.name}</span>
+      <div className="w-full overflow-hidden shrink-0">
+        <ProductImage name={product.name} size="card" />
       </div>
-      <p className="text-sm font-semibold text-gray-800 leading-tight line-clamp-2 group-hover:text-indigo-700 transition-colors">
-        {product.name}
-      </p>
-      <p className="text-base font-bold text-indigo-600 mt-auto">₹{product.price}</p>
+      <div className="p-2.5 flex flex-col gap-1 flex-1">
+        <div className="flex items-center gap-1.5">
+          <span className="w-2 h-2 rounded-full shrink-0" style={{ background: color }} />
+          <span className="text-[10px] text-gray-400 truncate">{product.category?.name}</span>
+        </div>
+        <p className="text-sm font-semibold text-gray-800 leading-tight line-clamp-2 group-hover:text-indigo-700 transition-colors">
+          {product.name}
+        </p>
+        <p className="text-base font-bold text-indigo-600 mt-auto">₹{product.price}</p>
+      </div>
     </button>
   );
 }
