@@ -29,13 +29,51 @@ const orderSchema = new mongoose.Schema({
   sessionDate: { type: Date, default: Date.now },
 }, { timestamps: true });
 
-// Auto-generate order number before save
+const counterSchema = new mongoose.Schema({
+  _id: { type: String },
+  seq: { type: Number, default: 0 },
+});
+const OrderCounter = mongoose.models.OrderCounter || mongoose.model('OrderCounter', counterSchema);
+
+// Auto-generate order number before save using an atomic counter
 orderSchema.pre('save', async function () {
   if (!this.isNew || this.orderNumber) return;
-  const last = await mongoose.model('Order').findOne({}, { orderNumber: 1 }).sort({ createdAt: -1 });
-  const lastNum = last?.orderNumber ? parseInt(last.orderNumber.replace('ORD-', ''), 10) : 0;
-  const next = isNaN(lastNum) ? 1 : lastNum + 1;
-  this.orderNumber = `ORD-${String(next).padStart(4, '0')}`;
+
+  const Order = mongoose.model('Order');
+  const makeOrderNumber = (seq) => `ORD-${String(seq).padStart(4, '0')}`;
+
+  const last = await Order.findOne({ orderNumber: /^ORD-\d+$/ })
+    .sort({ orderNumber: -1 })
+    .select('orderNumber')
+    .lean();
+  const lastNum = last ? parseInt(last.orderNumber.split('-')[1], 10) : 0;
+
+  let counter = await OrderCounter.findOneAndUpdate(
+    { _id: 'orderNumber' },
+    {
+      $max: { seq: lastNum },
+      $setOnInsert: { _id: 'orderNumber' },
+    },
+    { new: true, upsert: true, setDefaultsOnInsert: true }
+  );
+
+  counter = await OrderCounter.findOneAndUpdate(
+    { _id: 'orderNumber' },
+    { $inc: { seq: 1 } },
+    { new: true }
+  );
+
+  let candidateNumber = makeOrderNumber(counter.seq);
+  while (await Order.exists({ orderNumber: candidateNumber })) {
+    counter = await OrderCounter.findOneAndUpdate(
+      { _id: 'orderNumber' },
+      { $inc: { seq: 1 } },
+      { new: true }
+    );
+    candidateNumber = makeOrderNumber(counter.seq);
+  }
+
+  this.orderNumber = candidateNumber;
 });
 
 module.exports = mongoose.model('Order', orderSchema);
