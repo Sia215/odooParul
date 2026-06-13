@@ -9,15 +9,17 @@ import { usePOS }  from '../../context/POSContext';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
+const STATUS_MAP = {
+  Draft:     { bg: '#FFFBEB', color: '#92400E', border: '1px solid #FDE68A', icon: Clock },
+  Paid:      { bg: '#F0FDF4', color: '#166534', border: '1px solid #BBF7D0', icon: BadgeCheck },
+  Cancelled: { bg: '#FFF0EB', color: '#9A3412', border: '1px solid #FBBFA3', icon: Ban },
+};
+
 function StatusBadge({ status }) {
-  const map = {
-    Draft:     { cls: 'bg-amber-100 text-amber-700',    icon: Clock },
-    Paid:      { cls: 'bg-emerald-100 text-emerald-700', icon: BadgeCheck },
-    Cancelled: { cls: 'bg-red-100 text-red-500',         icon: Ban },
-  };
-  const { cls, icon: Icon } = map[status] || map.Draft;
+  const { bg, color, border, icon: Icon } = STATUS_MAP[status] || STATUS_MAP.Draft;
   return (
-    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ${cls}`}>
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold"
+      style={{ background: bg, color, border }}>
       <Icon size={10} /> {status}
     </span>
   );
@@ -26,25 +28,30 @@ function StatusBadge({ status }) {
 function OrderRow({ order, isSelected, onClick }) {
   return (
     <button onClick={onClick}
-      className={`w-full text-left px-4 py-3 border-b border-gray-100 flex items-center gap-3 transition-colors
-        ${isSelected ? 'bg-indigo-50' : 'hover:bg-gray-50'}`}>
+      className="w-full text-left px-4 py-3 flex items-center gap-3 transition-colors"
+      style={{
+        borderBottom: '1px solid #F5F5F4',
+        background: isSelected ? '#FFF0EB' : 'transparent',
+      }}
+      onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = '#FAFAF6'; }}
+      onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = 'transparent'; }}>
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between gap-2 mb-0.5">
-          <span className="text-sm font-semibold text-gray-800">{order.orderNumber}</span>
+          <span className="text-sm font-semibold" style={{ color: '#2E1A12' }}>{order.orderNumber}</span>
           <StatusBadge status={order.status} />
         </div>
         <div className="flex items-center justify-between gap-2">
-          <span className="text-xs text-gray-400 truncate">
+          <span className="text-xs truncate" style={{ color: '#A8A29E' }}>
             {order.customer || 'Walk-in'}
             {order.table?.number ? ` · Table ${order.table.number}` : ''}
           </span>
-          <span className="text-sm font-bold text-indigo-600 shrink-0">₹{order.total?.toFixed(2)}</span>
+          <span className="text-sm font-bold shrink-0" style={{ color: '#9A3412' }}>₹{order.total?.toFixed(2)}</span>
         </div>
-        <p className="text-[11px] text-gray-400 mt-0.5">
+        <p className="text-[11px] mt-0.5" style={{ color: '#A8A29E' }}>
           {new Date(order.sessionDate).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
         </p>
       </div>
-      <ChevronRight size={14} className="text-gray-300 shrink-0" />
+      <ChevronRight size={14} style={{ color: '#D6D3D1' }} className="shrink-0" />
     </button>
   );
 }
@@ -52,10 +59,10 @@ function OrderRow({ order, isSelected, onClick }) {
 function OrderDetail({ order, onBack, onDelete, onEdit, authHeader }) {
   const isDraft = order.status === 'Draft';
   const isPaid  = order.status === 'Paid';
-  const [email,       setEmail]       = useState(order.customerEmail || '');
-  const [sending,     setSending]     = useState(false);
-  const [sent,        setSent]        = useState(false);
-  const [sendError,   setSendError]   = useState('');
+  const [email,     setEmail]     = useState(order.customerEmail || '');
+  const [sending,   setSending]   = useState(false);
+  const [sent,      setSent]      = useState(false);
+  const [sendError, setSendError] = useState('');
 
   const handleSendBill = async () => {
     if (!email.trim()) return;
@@ -77,22 +84,26 @@ function OrderDetail({ order, onBack, onDelete, onEdit, authHeader }) {
   };
 
   return (
-    <div className="flex flex-col h-full bg-white">
+    <div className="flex flex-col h-full" style={{ background: '#FFFFFF' }}>
+
       {/* Header */}
-      <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-100 shrink-0">
+      <div className="flex items-center gap-3 px-4 py-3 shrink-0" style={{ borderBottom: '1.5px solid #D6D3D1', background: '#F4F4ED' }}>
         <button onClick={onBack}
-          className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+          className="p-1.5 rounded-lg transition-all"
+          style={{ color: '#78716C' }}
+          onMouseEnter={e => { e.currentTarget.style.background = '#EDE8E3'; e.currentTarget.style.color = '#2E1A12'; }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#78716C'; }}>
           <ArrowLeft size={16} />
         </button>
         <div className="flex-1">
-          <h3 className="text-sm font-semibold text-gray-800">{order.orderNumber}</h3>
-          <p className="text-xs text-gray-400">Order Details</p>
+          <h3 className="text-sm font-bold" style={{ color: '#2E1A12', fontFamily: 'Georgia, serif' }}>{order.orderNumber}</h3>
+          <p className="text-xs" style={{ color: '#A8A29E' }}>Order Details</p>
         </div>
         <StatusBadge status={order.status} />
       </div>
 
       {/* Meta */}
-      <div className="px-4 py-4 border-b border-gray-100 grid grid-cols-2 gap-3 shrink-0">
+      <div className="px-4 py-4 grid grid-cols-2 gap-3 shrink-0" style={{ borderBottom: '1px solid #F5F5F4' }}>
         {[
           { icon: Hash,     label: 'Order No.',  val: order.orderNumber },
           { icon: User,     label: 'Customer',   val: order.customer || 'Walk-in' },
@@ -100,35 +111,35 @@ function OrderDetail({ order, onBack, onDelete, onEdit, authHeader }) {
           { icon: Clock,    label: 'Time',        val: new Date(order.sessionDate).toLocaleTimeString('en-IN', { timeStyle: 'short' }) },
         ].map(({ icon: Icon, label, val }) => (
           <div key={label}>
-            <p className="text-[10px] text-gray-400 flex items-center gap-1 mb-0.5"><Icon size={10} />{label}</p>
-            <p className="text-xs font-semibold text-gray-700">{val}</p>
+            <p className="text-[10px] flex items-center gap-1 mb-0.5" style={{ color: '#A8A29E' }}><Icon size={10} />{label}</p>
+            <p className="text-xs font-semibold" style={{ color: '#2E1A12' }}>{val}</p>
           </div>
         ))}
         {order.table?.number && (
           <div className="col-span-2">
-            <p className="text-[10px] text-gray-400 mb-0.5">Table</p>
-            <p className="text-xs font-semibold text-gray-700">{order.table.number} · {order.table.floor}</p>
+            <p className="text-[10px] mb-0.5" style={{ color: '#A8A29E' }}>Table</p>
+            <p className="text-xs font-semibold" style={{ color: '#2E1A12' }}>{order.table.number} · {order.table.floor}</p>
           </div>
         )}
       </div>
 
       {/* Items */}
       <div className="flex-1 overflow-y-auto px-4 py-3">
-        <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1">
+        <p className="text-[10px] font-bold uppercase tracking-widest mb-2 flex items-center gap-1" style={{ color: '#A8A29E' }}>
           <Package size={10} /> Products
         </p>
         <div className="flex flex-col gap-1">
           {order.items?.map((item, i) => (
-            <div key={i} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
+            <div key={i} className="flex items-center justify-between py-2" style={{ borderBottom: '1px solid #F5F5F4' }}>
               <div className="flex items-center gap-2 min-w-0">
                 {item.category?.color && (
                   <span className="w-2 h-2 rounded-full shrink-0" style={{ background: item.category.color }} />
                 )}
-                <span className="text-sm text-gray-700 truncate">{item.name}</span>
+                <span className="text-sm truncate" style={{ color: '#2E1A12' }}>{item.name}</span>
               </div>
               <div className="text-right shrink-0 ml-2">
-                <p className="text-xs text-gray-400">×{item.qty} · ₹{item.price}</p>
-                <p className="text-sm font-semibold text-gray-800">₹{(item.price * item.qty).toFixed(2)}</p>
+                <p className="text-xs" style={{ color: '#A8A29E' }}>×{item.qty} · ₹{item.price}</p>
+                <p className="text-sm font-semibold" style={{ color: '#2E1A12' }}>₹{(item.price * item.qty).toFixed(2)}</p>
               </div>
             </div>
           ))}
@@ -136,34 +147,40 @@ function OrderDetail({ order, onBack, onDelete, onEdit, authHeader }) {
       </div>
 
       {/* Summary */}
-      <div className="px-4 py-3 bg-gray-50 border-t border-gray-100 space-y-1.5 shrink-0">
-        <div className="flex justify-between text-xs text-gray-500">
+      <div className="px-4 py-3 space-y-1.5 shrink-0" style={{ background: '#F4F4ED', borderTop: '1.5px solid #D6D3D1' }}>
+        <div className="flex justify-between text-xs" style={{ color: '#78716C' }}>
           <span>Subtotal</span><span>₹{order.subtotal?.toFixed(2)}</span>
         </div>
-        <div className="flex justify-between text-xs text-gray-500">
+        <div className="flex justify-between text-xs" style={{ color: '#78716C' }}>
           <span>Tax</span><span>₹{order.taxAmt?.toFixed(2)}</span>
         </div>
         {order.discountAmt > 0 && (
-          <div className="flex justify-between text-xs text-emerald-600">
+          <div className="flex justify-between text-xs" style={{ color: '#166534' }}>
             <span>Discount {order.couponCode ? `(${order.couponCode})` : ''}</span>
             <span>−₹{order.discountAmt?.toFixed(2)}</span>
           </div>
         )}
-        <div className="flex justify-between items-center pt-1.5 border-t border-gray-200">
-          <span className="text-sm font-bold text-gray-800">Total</span>
-          <span className="text-lg font-extrabold text-indigo-600">₹{order.total?.toFixed(2)}</span>
+        <div className="flex justify-between items-center pt-1.5" style={{ borderTop: '1px solid #D6D3D1' }}>
+          <span className="text-sm font-bold" style={{ color: '#2E1A12' }}>Total</span>
+          <span className="text-lg font-extrabold" style={{ color: '#9A3412' }}>₹{order.total?.toFixed(2)}</span>
         </div>
       </div>
 
       {/* Draft actions */}
       {isDraft && (
-        <div className="px-4 py-3 border-t border-gray-100 flex gap-2 shrink-0">
+        <div className="px-4 py-3 flex gap-2 shrink-0" style={{ borderTop: '1px solid #F5F5F4' }}>
           <button onClick={() => onDelete(order._id)}
-            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-red-200 text-red-500 hover:bg-red-50 text-sm font-medium transition-colors">
+            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-semibold transition-all"
+            style={{ border: '1.5px solid #FBBFA3', color: '#9A3412' }}
+            onMouseEnter={e => e.currentTarget.style.background = '#FFF0EB'}
+            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
             <Trash2 size={14} /> Delete
           </button>
           <button onClick={() => onEdit(order)}
-            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition-colors shadow-sm">
+            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-bold transition-all"
+            style={{ background: '#9A3412', color: '#FFF0EB', boxShadow: '0 4px 16px rgba(154,52,18,0.25)' }}
+            onMouseEnter={e => e.currentTarget.style.background = '#7C2D12'}
+            onMouseLeave={e => e.currentTarget.style.background = '#9A3412'}>
             <Pencil size={14} /> Edit Order
           </button>
         </div>
@@ -171,26 +188,33 @@ function OrderDetail({ order, onBack, onDelete, onEdit, authHeader }) {
 
       {/* Paid — send bill */}
       {isPaid && (
-        <div className="px-4 py-3 border-t border-gray-100 shrink-0 flex flex-col gap-2">
+        <div className="px-4 py-3 shrink-0 flex flex-col gap-2" style={{ borderTop: '1px solid #F5F5F4' }}>
           <div className="flex gap-2">
             <input
               type="email"
               value={email}
               onChange={(e) => { setEmail(e.target.value); setSent(false); setSendError(''); }}
               placeholder="Enter customer email"
-              className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+              className="flex-1 rounded-xl px-3 py-2 text-xs outline-none transition-all"
+              style={{ border: '1px solid #D6D3D1', color: '#2E1A12', background: '#FFFFFF' }}
+              onFocus={e => { e.target.style.border = '1.5px solid #9A3412'; e.target.style.boxShadow = '0 0 0 3px rgba(154,52,18,0.1)'; }}
+              onBlur={e => { e.target.style.border = '1px solid #D6D3D1'; e.target.style.boxShadow = 'none'; }}
             />
             <button
               onClick={handleSendBill}
               disabled={sending || !email.trim() || sent}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all
-                ${sent ? 'bg-emerald-100 text-emerald-700' : 'bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50'}`}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all disabled:opacity-50"
+              style={sent
+                ? { background: '#F0FDF4', color: '#166534', border: '1px solid #BBF7D0' }
+                : { background: '#9A3412', color: '#FFF0EB', boxShadow: '0 4px 12px rgba(154,52,18,0.2)' }}
+              onMouseEnter={e => { if (!sending && !sent) e.currentTarget.style.background = '#7C2D12'; }}
+              onMouseLeave={e => { if (!sent) e.currentTarget.style.background = '#9A3412'; }}
             >
               <Mail size={13} />
               {sending ? 'Sending…' : sent ? '✓ Sent' : 'Send Bill'}
             </button>
           </div>
-          {sendError && <p className="text-xs text-red-500">{sendError}</p>}
+          {sendError && <p className="text-xs" style={{ color: '#9A3412' }}>{sendError}</p>}
         </div>
       )}
     </div>
@@ -200,9 +224,9 @@ function OrderDetail({ order, onBack, onDelete, onEdit, authHeader }) {
 export default function OrdersView() {
   const { authHeader }          = useAuth();
   const { editOrder }           = usePOS();
-  const [orders,  setOrders]    = useState([]);
-  const [loading, setLoading]   = useState(true);
-  const [search,  setSearch]    = useState('');
+  const [orders,   setOrders]   = useState([]);
+  const [loading,  setLoading]  = useState(true);
+  const [search,   setSearch]   = useState('');
   const [selected, setSelected] = useState(null);
 
   const fetchOrders = async () => {
@@ -235,32 +259,42 @@ export default function OrdersView() {
   };
 
   return (
-    <div className="flex h-full overflow-hidden bg-gray-50">
+    <div className="flex h-full overflow-hidden" style={{ background: '#F4F4ED' }}>
 
       {/* ── List panel ── */}
-      <div className={`flex flex-col bg-white border-r border-gray-100
-        ${selected ? 'hidden md:flex md:w-80' : 'w-full md:w-80'}`}>
+      <div className={`flex flex-col border-r ${selected ? 'hidden md:flex md:w-80' : 'w-full md:w-80'}`}
+        style={{ background: '#FFFFFF', borderColor: '#D6D3D1' }}>
 
-        {/* Header + search */}
-        <div className="px-4 py-3 border-b border-gray-100 shrink-0">
+        {/* Header */}
+        <div className="px-4 py-3 shrink-0" style={{ borderBottom: '1.5px solid #D6D3D1', background: '#F4F4ED' }}>
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <ClipboardList size={15} className="text-indigo-500" />
-              <span className="text-sm font-semibold text-gray-800">Today's Orders</span>
+              <ClipboardList size={15} style={{ color: '#9A3412' }} />
+              <span className="text-sm font-bold" style={{ color: '#2E1A12', fontFamily: 'Georgia, serif' }}>Today's Orders</span>
             </div>
             <button onClick={fetchOrders}
-              className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+              className="p-1.5 rounded-lg transition-all"
+              style={{ color: '#A8A29E' }}
+              onMouseEnter={e => { e.currentTarget.style.background = '#EDE8E3'; e.currentTarget.style.color = '#9A3412'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#A8A29E'; }}>
               <RefreshCw size={13} />
             </button>
           </div>
+
+          {/* Search */}
           <div className="relative">
-            <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+            <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2" style={{ color: '#A8A29E' }} />
             <input value={search} onChange={(e) => setSearch(e.target.value)}
               placeholder="Order #, customer, date..."
-              className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-8 pr-8 py-2 text-xs outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all" />
+              className="w-full rounded-xl pl-8 pr-8 py-2 text-xs outline-none transition-all"
+              style={{ background: '#FFFFFF', border: '1px solid #D6D3D1', color: '#2E1A12' }}
+              onFocus={e => { e.target.style.border = '1.5px solid #9A3412'; e.target.style.boxShadow = '0 0 0 3px rgba(154,52,18,0.1)'; }}
+              onBlur={e => { e.target.style.border = '1px solid #D6D3D1'; e.target.style.boxShadow = 'none'; }}
+            />
             {search && (
               <button onClick={() => setSearch('')}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                className="absolute right-2.5 top-1/2 -translate-y-1/2"
+                style={{ color: '#A8A29E' }}>
                 <X size={12} />
               </button>
             )}
@@ -268,15 +302,15 @@ export default function OrdersView() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-3 divide-x divide-gray-100 border-b border-gray-100 shrink-0">
+        <div className="grid grid-cols-3 shrink-0" style={{ borderBottom: '1px solid #F5F5F4' }}>
           {[
-            { label: 'Total', val: orders.length,                                    color: 'text-gray-700' },
-            { label: 'Paid',  val: orders.filter((o) => o.status === 'Paid').length,  color: 'text-emerald-600' },
-            { label: 'Draft', val: orders.filter((o) => o.status === 'Draft').length, color: 'text-amber-600' },
-          ].map(({ label, val, color }) => (
-            <div key={label} className="py-2 text-center">
-              <p className={`text-base font-bold ${color}`}>{val}</p>
-              <p className="text-[10px] text-gray-400">{label}</p>
+            { label: 'Total', val: orders.length,                                    color: '#2E1A12' },
+            { label: 'Paid',  val: orders.filter((o) => o.status === 'Paid').length,  color: '#166534' },
+            { label: 'Draft', val: orders.filter((o) => o.status === 'Draft').length, color: '#92400E' },
+          ].map(({ label, val, color }, i) => (
+            <div key={label} className="py-2 text-center" style={{ borderRight: i < 2 ? '1px solid #F5F5F4' : 'none' }}>
+              <p className="text-base font-bold" style={{ color }}>{val}</p>
+              <p className="text-[10px]" style={{ color: '#A8A29E' }}>{label}</p>
             </div>
           ))}
         </div>
@@ -284,9 +318,9 @@ export default function OrdersView() {
         {/* Order list */}
         <div className="flex-1 overflow-y-auto">
           {loading ? (
-            <div className="flex items-center justify-center h-32 text-sm text-gray-400">Loading...</div>
+            <div className="flex items-center justify-center h-32 text-sm" style={{ color: '#A8A29E' }}>Loading...</div>
           ) : filtered.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-32 gap-2 text-gray-400">
+            <div className="flex flex-col items-center justify-center h-32 gap-2" style={{ color: '#A8A29E' }}>
               <ClipboardList size={28} className="opacity-30" />
               <p className="text-sm">{search ? 'No matching orders' : 'No orders today'}</p>
             </div>
@@ -311,7 +345,7 @@ export default function OrdersView() {
             authHeader={authHeader}
           />
         ) : (
-          <div className="text-center text-gray-300">
+          <div className="text-center" style={{ color: '#D6D3D1' }}>
             <ClipboardList size={48} className="mx-auto mb-3 opacity-30" />
             <p className="text-sm">Select an order to view details</p>
           </div>

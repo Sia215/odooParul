@@ -5,12 +5,72 @@ import { useAuth } from '../../context/AuthContext';
 const API = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 const STATUS_STYLES = {
-  PENDING:  'bg-yellow-100 text-yellow-700',
-  ACTIVE:   'bg-green-100 text-green-700',
-  ARCHIVED: 'bg-gray-100 text-gray-500',
+  PENDING:  { background: '#FFFBEB', color: '#92400E', border: '1px solid #FDE68A' },
+  ACTIVE:   { background: '#F0FDF4', color: '#166534', border: '1px solid #BBF7D0' },
+  ARCHIVED: { background: '#F5F5F4', color: '#78716C', border: '1px solid #D6D3D1' },
 };
 
-// Invite modal
+function Modal({ children }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(46,26,18,0.25)' }}>
+      <div className="w-full max-w-sm rounded-2xl p-6" style={{ background: '#F4F4ED', border: '1.5px solid #D6D3D1', boxShadow: '0 20px 60px rgba(46,26,18,0.15)' }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function ModalHeader({ icon: Icon, title, onClose }) {
+  return (
+    <div className="flex justify-between items-center mb-5">
+      <div className="flex items-center gap-2">
+        <Icon size={18} style={{ color: '#9A3412' }} />
+        <h3 className="font-bold" style={{ color: '#2E1A12', fontFamily: 'Georgia, serif' }}>{title}</h3>
+      </div>
+      <button onClick={onClose} style={{ color: '#A8A29E' }}
+        onMouseEnter={e => e.currentTarget.style.color = '#9A3412'}
+        onMouseLeave={e => e.currentTarget.style.color = '#A8A29E'}>
+        <X size={18} />
+      </button>
+    </div>
+  );
+}
+
+function FieldInput({ label, type = 'text', value, onChange, placeholder, required }) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <label className="text-xs font-bold uppercase tracking-widest" style={{ color: '#78716C' }}>{label}</label>
+      <input type={type} required={required} value={value} onChange={onChange} placeholder={placeholder}
+        className="rounded-xl px-4 py-3 text-sm outline-none transition-all duration-200"
+        style={{ background: '#FFFFFF', color: '#2E1A12', border: '1px solid #D6D3D1' }}
+        onFocus={e => { e.target.style.border = '1.5px solid #9A3412'; e.target.style.boxShadow = '0 0 0 3px rgba(154,52,18,0.1)'; }}
+        onBlur={e => { e.target.style.border = '1px solid #D6D3D1'; e.target.style.boxShadow = 'none'; }}
+      />
+    </div>
+  );
+}
+
+function ModalButtons({ onClose, loading, submitLabel, loadingLabel }) {
+  return (
+    <div className="flex gap-2 pt-1">
+      <button type="button" onClick={onClose}
+        className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150"
+        style={{ border: '1.5px solid #D6D3D1', color: '#78716C' }}
+        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(214,211,209,0.4)'; e.currentTarget.style.color = '#2E1A12'; }}
+        onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#78716C'; }}>
+        Cancel
+      </button>
+      <button type="submit" disabled={loading}
+        className="flex-1 py-2.5 text-sm font-bold rounded-xl transition-all duration-150 disabled:opacity-60"
+        style={{ background: '#9A3412', color: '#FFF0EB', boxShadow: '0 4px 16px rgba(154,52,18,0.25)' }}
+        onMouseEnter={e => { if (!loading) e.currentTarget.style.background = '#7C2D12'; }}
+        onMouseLeave={e => e.currentTarget.style.background = '#9A3412'}>
+        {loading ? loadingLabel : submitLabel}
+      </button>
+    </div>
+  );
+}
+
 function InviteModal({ onClose, onInvited, authHeader }) {
   const [form, setForm]   = useState({ name: '', email: '', phone: '' });
   const [error, setError] = useState('');
@@ -34,48 +94,21 @@ function InviteModal({ onClose, onInvited, authHeader }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6">
-        <div className="flex justify-between items-center mb-5">
-          <div className="flex items-center gap-2">
-            <UserPlus size={18} className="text-indigo-500" />
-            <h3 className="font-semibold text-gray-800">Invite Employee</h3>
-          </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={18} /></button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          {[
-            { key: 'name',  label: 'Full Name',    type: 'text',  placeholder: 'e.g. John Doe' },
-            { key: 'email', label: 'Email Address', type: 'email', placeholder: 'e.g. john@cafe.com' },
-            { key: 'phone', label: 'Phone Number',  type: 'tel',   placeholder: 'e.g. +91 9876543210' },
-          ].map(({ key, label, type, placeholder }) => (
-            <div key={key} className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-gray-700">{label}</label>
-              <input type={type} required value={form[key]} onChange={set(key)} placeholder={placeholder}
-                className="border border-gray-300 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100" />
-            </div>
-          ))}
-
-          {error && <p className="text-xs text-red-500 bg-red-50 px-3 py-2 rounded-lg">{error}</p>}
-
-          <div className="flex gap-2 pt-1">
-            <button type="button" onClick={onClose}
-              className="flex-1 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50">
-              Cancel
-            </button>
-            <button type="submit" disabled={loading}
-              className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg disabled:opacity-60">
-              {loading ? 'Inviting...' : 'Send Invite'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+    <Modal>
+      <ModalHeader icon={UserPlus} title="Invite Employee" onClose={onClose} />
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <FieldInput label="Full Name"     value={form.name}  onChange={set('name')}  placeholder="e.g. John Doe"         required />
+        <FieldInput label="Email Address" type="email" value={form.email} onChange={set('email')} placeholder="e.g. john@cafe.com" required />
+        <FieldInput label="Phone Number"  type="tel"  value={form.phone} onChange={set('phone')} placeholder="e.g. +91 9876543210" />
+        {error && (
+          <p className="text-xs px-3 py-2 rounded-xl" style={{ background: '#FFF0EB', color: '#9A3412', border: '1px solid #FBBFA3' }}>{error}</p>
+        )}
+        <ModalButtons onClose={onClose} loading={loading} submitLabel="Send Invite" loadingLabel="Inviting..." />
+      </form>
+    </Modal>
   );
 }
 
-// Password reset modal
 function PasswordModal({ employee, onClose, authHeader }) {
   const [password, setPassword] = useState('');
   const [error, setError]       = useState('');
@@ -101,36 +134,20 @@ function PasswordModal({ employee, onClose, authHeader }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="font-semibold text-gray-800 flex items-center gap-2">
-            <KeyRound size={16} className="text-indigo-500" /> Reset Password
-          </h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={18} /></button>
-        </div>
-        <p className="text-sm text-gray-500 mb-4">Set new password for <strong>{employee.name}</strong></p>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-          <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)}
-            placeholder="New password (min 6 chars)"
-            className="border border-gray-300 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100" />
-          {error   && <p className="text-xs text-red-500">{error}</p>}
-          {success && <p className="text-xs text-green-600">{success}</p>}
-          <div className="flex gap-2">
-            <button type="button" onClick={onClose}
-              className="flex-1 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50">Cancel</button>
-            <button type="submit" disabled={loading}
-              className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm rounded-lg disabled:opacity-60">
-              {loading ? 'Saving...' : 'Update'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+    <Modal>
+      <ModalHeader icon={KeyRound} title="Reset Password" onClose={onClose} />
+      <p className="text-sm mb-4" style={{ color: '#78716C' }}>Set new password for <strong style={{ color: '#2E1A12' }}>{employee.name}</strong></p>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+        <FieldInput label="New Password" type="password" value={password}
+          onChange={e => setPassword(e.target.value)} placeholder="Min. 6 characters" required />
+        {error   && <p className="text-xs" style={{ color: '#9A3412' }}>{error}</p>}
+        {success && <p className="text-xs" style={{ color: '#166534' }}>{success}</p>}
+        <ModalButtons onClose={onClose} loading={loading} submitLabel="Update" loadingLabel="Saving..." />
+      </form>
+    </Modal>
   );
 }
 
-// Main page
 export default function EmployeesPage({ readOnly = false }) {
   const { authHeader } = useAuth();
   const [employees, setEmployees] = useState([]);
@@ -148,9 +165,7 @@ export default function EmployeesPage({ readOnly = false }) {
   const handleInvited = (emp) => setEmployees((e) => [emp, ...e]);
 
   const handleArchive = async (emp) => {
-    const res  = await fetch(`${API}/employees/${emp._id}/archive`, {
-      method: 'PATCH', headers: authHeader(),
-    });
+    const res  = await fetch(`${API}/employees/${emp._id}/archive`, { method: 'PATCH', headers: authHeader() });
     const data = await res.json();
     setEmployees((e) => e.map((x) => x._id === emp._id ? { ...x, status: data.status } : x));
   };
@@ -163,59 +178,57 @@ export default function EmployeesPage({ readOnly = false }) {
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
-      {showInvite && (
-        <InviteModal
-          onClose={() => setShowInvite(false)}
-          onInvited={handleInvited}
-          authHeader={authHeader}
-        />
-      )}
-      {pwEmployee && (
-        <PasswordModal
-          employee={pwEmployee}
-          onClose={() => setPwEmployee(null)}
-          authHeader={authHeader}
-        />
-      )}
+      {showInvite && <InviteModal onClose={() => setShowInvite(false)} onInvited={handleInvited} authHeader={authHeader} />}
+      {pwEmployee && <PasswordModal employee={pwEmployee} onClose={() => setPwEmployee(null)} authHeader={authHeader} />}
 
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-xl font-semibold text-gray-900">Employees</h1>
-          <p className="text-sm text-gray-500">{employees.length} accounts</p>
+          <h1 className="text-xl font-black" style={{ color: '#2E1A12', fontFamily: 'Georgia, serif' }}>Employees</h1>
+          <p className="text-sm mt-0.5" style={{ color: '#A8A29E' }}>{employees.length} accounts</p>
         </div>
         {!readOnly && (
           <button onClick={() => setShowInvite(true)}
-            className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm rounded-lg font-medium">
+            className="flex items-center gap-1.5 px-4 py-2.5 text-sm font-bold rounded-xl transition-all duration-150 active:scale-95"
+            style={{ background: '#9A3412', color: '#FFF0EB', boxShadow: '0 4px 16px rgba(154,52,18,0.25)' }}
+            onMouseEnter={e => e.currentTarget.style.background = '#7C2D12'}
+            onMouseLeave={e => e.currentTarget.style.background = '#9A3412'}>
             <Plus size={15} /> Invite Employee
           </button>
         )}
       </div>
 
-      <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
+      <div className="rounded-2xl overflow-hidden" style={{ background: '#FFFFFF', border: '1.5px solid #D6D3D1', boxShadow: '0 2px 12px rgba(46,26,18,0.06)' }}>
         {loading ? (
-          <p className="text-center py-12 text-gray-400 text-sm">Loading...</p>
+          <p className="text-center py-12 text-sm" style={{ color: '#A8A29E' }}>Loading...</p>
         ) : employees.length === 0 ? (
-          <div className="text-center py-12 text-gray-400">
-            <Users size={36} className="mx-auto mb-2 opacity-30" />
-            <p className="text-sm">No employees yet. Invite one!</p>
+          <div className="text-center py-12">
+            <Users size={36} className="mx-auto mb-2 opacity-30" style={{ color: '#9A3412' }} />
+            <p className="text-sm" style={{ color: '#A8A29E' }}>No employees yet. Invite one!</p>
           </div>
         ) : (
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead style={{ background: '#F4F4ED', borderBottom: '1.5px solid #D6D3D1' }}>
               <tr>
                 {['Name', 'Email', 'Phone', 'Status', ...(!readOnly ? ['Actions'] : [])].map((h) => (
-                  <th key={h} className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">{h}</th>
+                  <th key={h} className="text-left px-4 py-3 text-xs font-bold uppercase tracking-widest" style={{ color: '#A8A29E' }}>{h}</th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
-              {employees.map((emp) => (
-                <tr key={emp._id} className={`hover:bg-gray-50 ${emp.status === 'ARCHIVED' ? 'opacity-50' : ''}`}>
-                  <td className="px-4 py-3 font-medium text-gray-800">{emp.name}</td>
-                  <td className="px-4 py-3 text-gray-500">{emp.email}</td>
-                  <td className="px-4 py-3 text-gray-500">{emp.phone || '—'}</td>
+            <tbody>
+              {employees.map((emp, i) => (
+                <tr key={emp._id}
+                  className="transition-colors"
+                  style={{
+                    borderTop: i > 0 ? '1px solid #F5F5F4' : 'none',
+                    opacity: emp.status === 'ARCHIVED' ? 0.55 : 1,
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = '#FAFAF6'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                  <td className="px-4 py-3 font-semibold" style={{ color: '#2E1A12' }}>{emp.name}</td>
+                  <td className="px-4 py-3" style={{ color: '#78716C' }}>{emp.email}</td>
+                  <td className="px-4 py-3" style={{ color: '#78716C' }}>{emp.phone || '—'}</td>
                   <td className="px-4 py-3">
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_STYLES[emp.status]}`}>
+                    <span className="text-xs px-2.5 py-1 rounded-full font-semibold" style={STATUS_STYLES[emp.status]}>
                       {emp.status}
                     </span>
                   </td>
@@ -223,15 +236,24 @@ export default function EmployeesPage({ readOnly = false }) {
                     <td className="px-4 py-3">
                       <div className="flex gap-1">
                         <button onClick={() => setPwEmployee(emp)} title="Reset Password"
-                          className="p-1.5 text-indigo-400 hover:bg-indigo-50 rounded-lg">
+                          className="p-1.5 rounded-lg transition-all duration-150"
+                          style={{ color: '#9A3412' }}
+                          onMouseEnter={e => e.currentTarget.style.background = '#FFF0EB'}
+                          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                           <KeyRound size={14} />
                         </button>
                         <button onClick={() => handleArchive(emp)} title={emp.status === 'ARCHIVED' ? 'Unarchive' : 'Archive'}
-                          className={`p-1.5 rounded-lg ${emp.status === 'ARCHIVED' ? 'text-green-500 hover:bg-green-50' : 'text-amber-400 hover:bg-amber-50'}`}>
+                          className="p-1.5 rounded-lg transition-all duration-150"
+                          style={{ color: emp.status === 'ARCHIVED' ? '#166534' : '#92400E' }}
+                          onMouseEnter={e => e.currentTarget.style.background = emp.status === 'ARCHIVED' ? '#F0FDF4' : '#FFFBEB'}
+                          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                           <Archive size={14} />
                         </button>
                         <button onClick={() => handleDelete(emp._id)} title="Delete"
-                          className="p-1.5 text-red-400 hover:bg-red-50 rounded-lg">
+                          className="p-1.5 rounded-lg transition-all duration-150"
+                          style={{ color: '#991B1B' }}
+                          onMouseEnter={e => e.currentTarget.style.background = '#FEF2F2'}
+                          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                           <Trash2 size={14} />
                         </button>
                       </div>

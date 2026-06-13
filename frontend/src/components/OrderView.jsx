@@ -252,12 +252,14 @@ export default function OrderView() {
           method: 'PATCH', headers: getHeaders(), body: JSON.stringify(orderPayload),
         });
         savedOrder = await r.json();
+        if (!r.ok) throw new Error(savedOrder.message || 'Failed to update order');
         setEditingOrderId(null);
       } else {
         const r = await fetch(`${API}/orders`, {
           method: 'POST', headers: getHeaders(), body: JSON.stringify(orderPayload),
         });
         savedOrder = await r.json();
+        if (!r.ok) throw new Error(savedOrder.message || 'Failed to create order');
       }
 
       if (currentTable?._id) await freeTable(currentTable._id);
@@ -285,7 +287,7 @@ export default function OrderView() {
   };
 
   const handleSendBill = async () => {
-    if (!paidOrder?._id || !customerEmail) return;
+    if (!paidOrder?._id || paidOrder.orderNumber === 'Preview' || !customerEmail) return;
     setSendingBill(true);
     try {
       const token = JSON.parse(localStorage.getItem('pos_session') || '{}')?.token;

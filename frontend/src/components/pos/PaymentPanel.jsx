@@ -6,13 +6,7 @@ import { buildUpiLink } from '../../utils/upi';
 const API = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 const NUMPAD_MODES = ['Qty', 'Price', 'Disc.'];
-
-const NUMPAD_KEYS = [
-  '7', '8', '9',
-  '4', '5', '6',
-  '1', '2', '3',
-  '+/-', '0', '⌫',
-];
+const NUMPAD_KEYS  = ['7','8','9','4','5','6','1','2','3','+/-','0','⌫'];
 
 export default function PaymentPanel({ total, onNumpadInput, onModeChange, onCharge, currentTable, onFreeTable }) {
   const [payConfig,     setPayConfig]     = useState(null);
@@ -25,7 +19,6 @@ export default function PaymentPanel({ total, onNumpadInput, onModeChange, onCha
       .then((r) => r.json())
       .then((data) => {
         setPayConfig(data);
-        // Default to first enabled method
         if (data.cash?.enabled)      setActiveMethod('cash');
         else if (data.card?.enabled) setActiveMethod('card');
         else if (data.upi?.enabled)  setActiveMethod('upi');
@@ -46,7 +39,6 @@ export default function PaymentPanel({ total, onNumpadInput, onModeChange, onCha
       onNumpadInput?.(next, numpadMode);
       return;
     }
-    // Prevent multiple decimals
     if (key === '.' && amountEntered.includes('.')) return;
     const next = amountEntered + key;
     setAmountEntered(next);
@@ -60,45 +52,47 @@ export default function PaymentPanel({ total, onNumpadInput, onModeChange, onCha
   };
 
   const methods = payConfig ? [
-    payConfig.cash?.enabled && { id: 'cash', label: 'Cash',  icon: Banknote,    color: 'emerald' },
-    payConfig.card?.enabled && { id: 'card', label: 'Card',  icon: CreditCard,  color: 'blue' },
-    payConfig.upi?.enabled  && { id: 'upi',  label: 'UPI',   icon: Smartphone,  color: 'purple', upiId: payConfig.upi.upiId },
+    payConfig.cash?.enabled && { id: 'cash', label: 'Cash', icon: Banknote },
+    payConfig.card?.enabled && { id: 'card', label: 'Card', icon: CreditCard },
+    payConfig.upi?.enabled  && { id: 'upi',  label: 'UPI',  icon: Smartphone, upiId: payConfig.upi.upiId },
   ].filter(Boolean) : [];
 
-  const colorMap = {
-    emerald: { active: 'bg-emerald-600 border-emerald-600 text-white shadow-emerald-200', hover: 'hover:border-emerald-400 hover:bg-emerald-50 hover:text-emerald-700' },
-    blue:    { active: 'bg-blue-600 border-blue-600 text-white shadow-blue-200',          hover: 'hover:border-blue-400 hover:bg-blue-50 hover:text-blue-700' },
-    purple:  { active: 'bg-violet-600 border-violet-600 text-white shadow-violet-200',    hover: 'hover:border-violet-400 hover:bg-violet-50 hover:text-violet-700' },
-  };
-
   return (
-    <div className="flex flex-col h-full bg-white">
+    <div className="flex flex-col h-full" style={{ background: '#FFFFFF' }}>
 
       {/* ── Payment Methods ── */}
-      <div className="px-3 pt-3 pb-2 border-b border-gray-100 shrink-0">
-        <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Payment Method</p>
+      <div className="px-3 pt-3 pb-2 shrink-0" style={{ borderBottom: '1.5px solid #D6D3D1' }}>
+        <p className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: '#A8A29E' }}>
+          Payment Method
+        </p>
         <div className="flex flex-col gap-2">
           {methods.length === 0 ? (
-            <p className="text-xs text-gray-400 text-center py-2">No payment methods configured</p>
+            <p className="text-xs text-center py-2" style={{ color: '#A8A29E' }}>No payment methods configured</p>
           ) : methods.map((m) => {
-            const Icon    = m.icon;
+            const Icon     = m.icon;
             const isActive = activeMethod === m.id;
-            const cls      = colorMap[m.color];
             return (
               <button
                 key={m.id}
                 onClick={() => setActiveMethod(m.id)}
-                className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl border-2 text-sm font-semibold transition-all
-                  ${isActive ? `${cls.active} shadow-md` : `border-gray-200 text-gray-600 ${cls.hover}`}`}
+                className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-bold transition-all active:scale-95"
+                style={{
+                  background:  isActive ? '#2E1A12' : '#FFFFFF',
+                  border:      isActive ? '2px solid #2E1A12' : '1.5px solid #D6D3D1',
+                  color:       isActive ? '#FFF0EB' : '#78716C',
+                  boxShadow:   isActive ? '0 4px 16px rgba(46,26,18,0.3)' : 'none',
+                }}
+                onMouseEnter={e => { if (!isActive) { e.currentTarget.style.background = '#F4F4ED'; e.currentTarget.style.borderColor = '#2E1A12'; e.currentTarget.style.color = '#2E1A12'; }}}
+                onMouseLeave={e => { if (!isActive) { e.currentTarget.style.background = '#FFFFFF'; e.currentTarget.style.borderColor = '#D6D3D1'; e.currentTarget.style.color = '#78716C'; }}}
               >
                 <Icon size={16} />
                 <span className="flex-1 text-left">{m.label}</span>
                 {isActive && m.id === 'upi' && m.upiId && (
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded-md bg-white/20`}>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-md" style={{ background: 'rgba(255,255,255,0.2)' }}>
                     {m.upiId}
                   </span>
                 )}
-                {isActive && <CheckCircle size={14} className="opacity-80" />}
+                {isActive && <CheckCircle size={14} style={{ opacity: 0.85 }} />}
               </button>
             );
           })}
@@ -108,8 +102,8 @@ export default function PaymentPanel({ total, onNumpadInput, onModeChange, onCha
       {/* ── UPI QR Code ── */}
       {activeMethod === 'upi' && payConfig?.upi?.upiId && (
         <div className="flex-1 flex flex-col items-center justify-center gap-3 px-3 py-2">
-          <p className="text-xs text-violet-600 font-medium">Scan to Pay ₹{total.toFixed(2)}</p>
-          <div className="bg-white p-2 rounded-xl border-2 border-violet-200 shadow-sm">
+          <p className="text-xs font-semibold" style={{ color: '#9A3412' }}>Scan to Pay ₹{total.toFixed(2)}</p>
+          <div className="p-2 rounded-xl" style={{ background: '#FFFFFF', border: '2px solid #D6D3D1', boxShadow: '0 2px 12px rgba(46,26,18,0.08)' }}>
             <QRCodeSVG
               value={buildUpiLink({ upiId: payConfig.upi.upiId, amount: total })}
               size={160}
@@ -117,8 +111,8 @@ export default function PaymentPanel({ total, onNumpadInput, onModeChange, onCha
               includeMargin
             />
           </div>
-          <p className="text-xs font-mono text-violet-700 font-semibold">{payConfig.upi.upiId}</p>
-          <p className="text-xs text-gray-400">After customer pays, tap Charge below</p>
+          <p className="text-xs font-mono font-bold" style={{ color: '#9A3412' }}>{payConfig.upi.upiId}</p>
+          <p className="text-xs" style={{ color: '#A8A29E' }}>After customer pays, tap Charge below</p>
         </div>
       )}
 
@@ -126,19 +120,19 @@ export default function PaymentPanel({ total, onNumpadInput, onModeChange, onCha
       {activeMethod !== 'upi' && (
         <>
           {/* Amount Display */}
-          <div className="px-3 py-2.5 bg-gray-50 border-b border-gray-100 shrink-0">
+          <div className="px-3 py-2.5 shrink-0" style={{ background: '#F4F4ED', borderBottom: '1px solid #D6D3D1' }}>
             <div className="flex items-center justify-between mb-1">
-              <span className="text-xs text-gray-400">Amount Due</span>
-              <span className="text-xs text-gray-400">Entered</span>
+              <span className="text-xs" style={{ color: '#A8A29E' }}>Amount Due</span>
+              <span className="text-xs" style={{ color: '#A8A29E' }}>Entered</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-2xl font-extrabold text-gray-800">₹{total.toFixed(2)}</span>
-              <span className={`text-xl font-bold transition-colors ${amountEntered ? 'text-indigo-600' : 'text-gray-300'}`}>
+              <span className="text-2xl font-extrabold" style={{ color: '#2E1A12' }}>₹{total.toFixed(2)}</span>
+              <span className="text-xl font-bold transition-colors" style={{ color: amountEntered ? '#9A3412' : '#D6D3D1' }}>
                 {amountEntered || '—'}
               </span>
             </div>
             {amountEntered && parseFloat(amountEntered) >= total && (
-              <p className="text-xs text-emerald-600 font-medium mt-1">
+              <p className="text-xs font-semibold mt-1" style={{ color: '#166534' }}>
                 Change: ₹{(parseFloat(amountEntered) - total).toFixed(2)}
               </p>
             )}
@@ -146,11 +140,15 @@ export default function PaymentPanel({ total, onNumpadInput, onModeChange, onCha
 
           {/* Numpad Mode Tabs */}
           <div className="px-3 pt-2.5 shrink-0">
-            <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
+            <div className="flex gap-1 rounded-xl p-1" style={{ background: '#F4F4ED' }}>
               {NUMPAD_MODES.map((mode) => (
                 <button key={mode} onClick={() => handleModeChange(mode)}
-                  className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all
-                    ${numpadMode === mode ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+                  className="flex-1 py-1.5 rounded-lg text-xs font-bold transition-all"
+                  style={{
+                    background: numpadMode === mode ? '#FFFFFF' : 'transparent',
+                    color:      numpadMode === mode ? '#9A3412'  : '#A8A29E',
+                    boxShadow:  numpadMode === mode ? '0 1px 4px rgba(46,26,18,0.1)' : 'none',
+                  }}>
                   {mode}
                 </button>
               ))}
@@ -162,10 +160,24 @@ export default function PaymentPanel({ total, onNumpadInput, onModeChange, onCha
             <div className="grid grid-cols-3 gap-1.5 h-full">
               {NUMPAD_KEYS.map((key) => (
                 <button key={key} onClick={() => handleNumpad(key)}
-                  className={`flex items-center justify-center rounded-xl text-base font-bold transition-all active:scale-95
-                    ${key === '⌫' ? 'bg-red-50 text-red-500 border border-red-100 hover:bg-red-100'
-                    : key === '+/-' ? 'bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-200'
-                    : 'bg-gray-50 text-gray-800 border border-gray-200 hover:bg-indigo-50 hover:border-indigo-200 hover:text-indigo-700'}`}>
+                  className="flex items-center justify-center rounded-xl text-base font-bold transition-all active:scale-95"
+                  style={
+                    key === '⌫'
+                      ? { background: '#FFF0EB', color: '#9A3412', border: '1px solid #FBBFA3' }
+                      : key === '+/-'
+                      ? { background: '#F4F4ED', color: '#78716C', border: '1px solid #D6D3D1' }
+                      : { background: '#F4F4ED', color: '#2E1A12', border: '1px solid #D6D3D1' }
+                  }
+                  onMouseEnter={e => {
+                    if (key === '⌫') { e.currentTarget.style.background = '#FBBFA3'; }
+                    else { e.currentTarget.style.background = '#EDE8E3'; e.currentTarget.style.borderColor = '#9A3412'; e.currentTarget.style.color = '#9A3412'; }
+                  }}
+                  onMouseLeave={e => {
+                    if (key === '⌫') { e.currentTarget.style.background = '#FFF0EB'; }
+                    else if (key === '+/-') { e.currentTarget.style.background = '#F4F4ED'; e.currentTarget.style.borderColor = '#D6D3D1'; e.currentTarget.style.color = '#78716C'; }
+                    else { e.currentTarget.style.background = '#F4F4ED'; e.currentTarget.style.borderColor = '#D6D3D1'; e.currentTarget.style.color = '#2E1A12'; }
+                  }}
+                >
                   {key === '⌫' ? <Delete size={16} /> : key}
                 </button>
               ))}
@@ -179,7 +191,14 @@ export default function PaymentPanel({ total, onNumpadInput, onModeChange, onCha
         <button
           disabled={!activeMethod || total === 0}
           onClick={() => onCharge?.(activeMethod)}
-          className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-200 disabled:text-gray-400 text-white rounded-xl text-sm font-bold transition-all shadow-md shadow-indigo-200 disabled:shadow-none active:scale-95"
+          className="w-full py-3.5 rounded-xl text-sm font-bold transition-all active:scale-95 disabled:opacity-50"
+          style={{
+            background: (!activeMethod || total === 0) ? '#D6D3D1' : '#9A3412',
+            color:      (!activeMethod || total === 0) ? '#A8A29E' : '#FFF0EB',
+            boxShadow:  (!activeMethod || total === 0) ? 'none'    : '0 4px 16px rgba(154,52,18,0.3)',
+          }}
+          onMouseEnter={e => { if (activeMethod && total > 0) e.currentTarget.style.background = '#7C2D12'; }}
+          onMouseLeave={e => { if (activeMethod && total > 0) e.currentTarget.style.background = '#9A3412'; }}
         >
           {activeMethod ? `Charge ₹${total.toFixed(2)} · ${activeMethod.toUpperCase()}` : 'Select Payment Method'}
         </button>

@@ -34,20 +34,21 @@ export function CategoryProvider({ children }) {
 
   // WebSocket — real-time color/name sync
   useEffect(() => {
+    let active = true;
     const connect = () => {
       const ws = new WebSocket(WS_URL);
       wsRef.current = ws;
 
       ws.onmessage = (e) => {
         const msg = JSON.parse(e.data);
-        dispatch(msg); // msg.type matches reducer cases directly
+        dispatch(msg);
       };
 
-      ws.onclose = () => setTimeout(connect, 3000); // auto-reconnect
+      ws.onclose = () => { if (active) setTimeout(connect, 3000); };
       ws.onerror = () => ws.close();
     };
     connect();
-    return () => wsRef.current?.close();
+    return () => { active = false; wsRef.current?.close(); };
   }, []);
 
   const createCategory = async (name, color) => {

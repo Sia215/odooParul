@@ -5,16 +5,14 @@ const { authMiddleware } = require('../middleware/auth');
 
 const router = express.Router();
 
-const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 465,
-  secure: true,
-  auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
-});
-transporter.verify((err) => {
-  if (err) console.error('[Mailer] SMTP connection failed:', err.message);
-  else console.log('[Mailer] SMTP ready:', process.env.EMAIL_USER);
-});
+function getTransporter() {
+  return nodemailer.createTransport({
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
+    auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
+  });
+}
 
 const INR = (v) => `₹${Number(v || 0).toFixed(2)}`;
 
@@ -140,6 +138,7 @@ router.post('/:id/send-bill', authMiddleware, async (req, res) => {
 </div>
 </body></html>`;
 
+    const transporter = getTransporter();
     await transporter.sendMail({
       from: `"Odoo Cafe" <${process.env.EMAIL_USER}>`,
       to,

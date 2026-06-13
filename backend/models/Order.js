@@ -18,8 +18,9 @@ const orderSchema = new mongoose.Schema({
   taxAmt:      { type: Number, default: 0 },
   discountAmt: { type: Number, default: 0 },
   total:       { type: Number, required: true },
-  couponCode:  { type: String, default: null },
-  status:      { type: String, enum: ['Draft', 'Paid', 'Cancelled'], default: 'Draft' },
+  couponCode:    { type: String, default: null },
+  paymentMethod: { type: String, default: 'cash' },
+  status:        { type: String, enum: ['Draft', 'Paid', 'Cancelled'], default: 'Draft' },
   kdsStage:    { type: String, enum: ['to_cook', 'preparing', 'completed', 'archived'], default: null },
   kdsSentAt:   { type: Date, default: null },
   kdsItemsDone: { type: [String], default: [] }, // array of item index strings marked done

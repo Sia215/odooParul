@@ -14,8 +14,8 @@ function Toggle({ enabled, onChange }) {
     <button
       type="button"
       onClick={() => onChange(!enabled)}
-      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none
-        ${enabled ? 'bg-indigo-600' : 'bg-gray-300'}`}
+      className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none"
+      style={{ background: enabled ? '#9A3412' : '#D6D3D1' }}
     >
       <span
         className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform
@@ -65,45 +65,46 @@ export default function PaymentMethodsPage({ readOnly = false }) {
       label: 'Cash',
       desc:  'Accept cash payments. Cashier enters amount received and system computes change.',
       icon:  Banknote,
-      color: 'text-green-600',
-      bg:    'bg-green-50',
+      iconBg: '#FFF0EB',
+      iconColor: '#9A3412',
     },
     {
       key:   'card',
       label: 'Card / Digital',
       desc:  'Accept card and bank transfers. Requires a transaction reference number for auditing.',
       icon:  CreditCard,
-      color: 'text-blue-600',
-      bg:    'bg-blue-50',
+      iconBg: '#FFF0EB',
+      iconColor: '#9A3412',
     },
     {
       key:   'upi',
       label: 'UPI QR',
       desc:  'Generate a dynamic QR code at checkout embedding your UPI ID and order total.',
       icon:  QrCode,
-      color: 'text-indigo-600',
-      bg:    'bg-indigo-50',
+      iconBg: '#FFF0EB',
+      iconColor: '#9A3412',
     },
   ];
 
   return (
     <div className="p-6 max-w-2xl mx-auto">
       <div className="mb-6">
-        <h1 className="text-xl font-semibold text-gray-900">Payment Methods</h1>
-        <p className="text-sm text-gray-500 mt-0.5">Enable or disable payment options shown at checkout.</p>
+        <h1 className="text-xl font-black" style={{ color: '#2E1A12', fontFamily: 'Georgia, serif' }}>Payment Methods</h1>
+        <p className="text-sm mt-0.5" style={{ color: '#A8A29E' }}>Enable or disable payment options shown at checkout.</p>
       </div>
 
       <div className="flex flex-col gap-4">
-        {methods.map(({ key, label, desc, icon: Icon, color, bg }) => (
-          <div key={key} className="bg-white border border-gray-200 rounded-2xl p-5">
+        {methods.map(({ key, label, desc, icon: Icon, iconBg, iconColor }) => (
+          <div key={key} className="rounded-2xl p-5 transition-all"
+            style={{ background: '#FFFFFF', border: '1.5px solid #D6D3D1', boxShadow: '0 2px 12px rgba(46,26,18,0.06)' }}>
             <div className="flex items-start justify-between gap-4">
               <div className="flex items-start gap-3">
-                <div className={`${bg} p-2.5 rounded-xl`}>
-                  <Icon size={20} className={color} />
+                <div className="p-2.5 rounded-xl" style={{ background: iconBg }}>
+                  <Icon size={20} style={{ color: iconColor }} />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-gray-800">{label}</p>
-                  <p className="text-xs text-gray-500 mt-0.5 max-w-sm">{desc}</p>
+                  <p className="text-sm font-bold" style={{ color: '#2E1A12' }}>{label}</p>
+                  <p className="text-xs mt-0.5 max-w-sm" style={{ color: '#78716C' }}>{desc}</p>
                 </div>
               </div>
               <Toggle
@@ -112,17 +113,21 @@ export default function PaymentMethodsPage({ readOnly = false }) {
               />
             </div>
 
-            {/* UPI ID input — only shown when UPI card is expanded and enabled */}
             {key === 'upi' && config.upi.enabled && (
-              <div className="mt-4 pt-4 border-t border-gray-100">
-                <label className="text-xs font-medium text-gray-700 block mb-1.5">Business UPI ID</label>
+              <div className="mt-4 pt-4" style={{ borderTop: '1px solid #F5F5F4' }}>
+                <label className="text-xs font-bold uppercase tracking-widest block mb-1.5" style={{ color: '#78716C' }}>
+                  Business UPI ID
+                </label>
                 <input
                   type="text"
                   value={config.upi.upiId}
                   onChange={(e) => !readOnly && setMethod('upi', { upiId: e.target.value })}
                   readOnly={readOnly}
                   placeholder="e.g. cafe@ybl"
-                  className={`w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none ${readOnly ? 'bg-gray-50 cursor-default' : 'focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100'}`}
+                  className="w-full rounded-xl px-4 py-2.5 text-sm outline-none transition-all"
+                  style={{ background: readOnly ? '#F5F5F4' : '#FFFFFF', color: '#2E1A12', border: '1px solid #D6D3D1' }}
+                  onFocus={e => { e.target.style.border = '1.5px solid #9A3412'; e.target.style.boxShadow = '0 0 0 3px rgba(154,52,18,0.1)'; }}
+                  onBlur={e => { e.target.style.border = '1px solid #D6D3D1'; e.target.style.boxShadow = 'none'; }}
                 />
               </div>
             )}
@@ -131,10 +136,12 @@ export default function PaymentMethodsPage({ readOnly = false }) {
       </div>
 
       {message && (
-        <div className={`mt-4 text-sm px-4 py-3 rounded-xl border
-          ${message.error
-            ? 'bg-red-50 text-red-600 border-red-200'
-            : 'bg-green-50 text-green-700 border-green-200'}`}>
+        <div className="mt-4 text-sm px-4 py-3 rounded-xl"
+          style={{
+            background: message.error ? '#FFF0EB' : '#F0FDF4',
+            color:      message.error ? '#9A3412'  : '#166534',
+            border:     `1px solid ${message.error ? '#FBBFA3' : '#BBF7D0'}`,
+          }}>
           {message.text}
         </div>
       )}
@@ -143,7 +150,10 @@ export default function PaymentMethodsPage({ readOnly = false }) {
         <button
           onClick={handleSave}
           disabled={loading}
-          className="mt-5 flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg disabled:opacity-60"
+          className="mt-5 flex items-center gap-2 px-5 py-2.5 text-sm font-bold rounded-xl transition-all duration-150 disabled:opacity-60 active:scale-95"
+          style={{ background: '#9A3412', color: '#FFF0EB', boxShadow: '0 4px 16px rgba(154,52,18,0.25)' }}
+          onMouseEnter={e => { if (!loading) e.currentTarget.style.background = '#7C2D12'; }}
+          onMouseLeave={e => e.currentTarget.style.background = '#9A3412'}
         >
           <Save size={15} />
           {loading ? 'Saving...' : 'Save Settings'}

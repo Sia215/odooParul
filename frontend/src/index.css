@@ -1,6 +1,43 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400&display=swap');
 @import "tailwindcss";
 
-* {
-  font-family: 'Inter', system-ui, sans-serif;
+/* ── Tailwind v4 custom theme tokens ── */
+@theme {
+  --color-canvas:       #FAFAF6;
+  --color-surface:      #F4F4ED;
+  --color-espresso:     #2E1A12;
+  --color-walnut:       #D6D3D1;
+  --color-terracotta:   #9A3412;
+  --color-terra-light:  #FFF0EB;
+  --color-terra-mid:    #C2440F;
+  --color-sage:         #166534;
+  --color-sage-light:   #F0FDF4;
+  --color-muted:        #78716C;
+  --color-muted-light:  #A8A29E;
+  --transition-pop:     all 0.2s ease-in-out;
 }
+
+* { font-family: 'Inter', system-ui, sans-serif; }
+
+body { background: #FAFAF6; color: #2E1A12; }
+
+@keyframes pop-in {
+  0%   { opacity: 0; transform: scale(0.92) translateY(10px); }
+  100% { opacity: 1; transform: scale(1)    translateY(0); }
+}
+@keyframes fade-in  { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slide-up { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes slideIn  { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes toast-in { from { opacity: 0; transform: translateY(8px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes input-pop {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.03); }
+  100% { transform: scale(1.025); }
+}
+
+.animate-pop-in    { animation: pop-in    0.22s cubic-bezier(.34,1.56,.64,1) both; }
+.animate-fade-in   { animation: fade-in   0.18s ease both; }
+.animate-slide-up  { animation: slide-up  0.2s  ease both; }
+.animate-slideIn   { animation: slideIn   0.25s ease both; }
+.animate-toast-in  { animation: toast-in  0.22s cubic-bezier(.34,1.56,.64,1) both; }
+.animate-input-pop { animation: input-pop 0.18s cubic-bezier(0.34,1.56,0.64,1) forwards; }

@@ -2,8 +2,7 @@ import { useState } from 'react';
 import { CategoryProvider } from './context/CategoryContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import KDSPage from './pages/KDSPage';
-import LoginCard from './components/LoginCard';
-import SignUpCard from './components/SignUpCard';
+import AuthPortal from './components/AuthPortal';
 import FirstTimeSetup from './pages/FirstTimeSetup';
 import CashierDashboard from './pages/CashierDashboard';
 import ProductsPage from './pages/admin/ProductsPage';
@@ -33,25 +32,54 @@ function AdminLayout() {
 
   return (
     <CategoryProvider>
-      <div className="min-h-screen bg-slate-50 flex">
-        <aside className="w-56 bg-white border-r border-gray-200 flex flex-col">
-          <div className="px-5 py-4 border-b border-gray-200">
-            <p className="text-base font-semibold text-indigo-600">☕ Odoo Cafe</p>
-            <p className="text-xs text-gray-400 mt-0.5">POS Admin</p>
+      <div className="min-h-screen flex" style={{ background: '#FAFAF6' }}>
+        <aside className="w-56 shrink-0 flex flex-col" style={{ background: '#F4F4ED', borderRight: '1.5px solid #D6D3D1' }}>
+          <div className="px-5 py-5" style={{ borderBottom: '1px solid #D6D3D1' }}>
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0" style={{ background: '#FFF0EB', border: '1.5px solid #FBBFA3' }}>
+                <svg width="18" height="18" viewBox="0 0 48 48" fill="none">
+                  <path d="M10 18h28l-3 18H13L10 18z" fill="#9A3412" />
+                  <rect x="9" y="14" width="30" height="5" rx="2.5" fill="#7C2D12" />
+                  <path d="M18 10 Q19 7 18 4" stroke="#9A3412" strokeWidth="2" strokeLinecap="round" />
+                  <path d="M24 10 Q25 7 24 4" stroke="#9A3412" strokeWidth="2" strokeLinecap="round" />
+                  <path d="M30 10 Q31 7 30 4" stroke="#9A3412" strokeWidth="2" strokeLinecap="round" />
+                  <path d="M38 20 Q46 20 46 28 Q46 36 38 36" stroke="#7C2D12" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-sm font-black leading-tight" style={{ color: '#2E1A12', fontFamily: 'Georgia, serif' }}>The Velvet Bean Co.</p>
+                <p className="text-[9px] font-semibold uppercase tracking-widest mt-0.5" style={{ color: '#9A3412' }}>POS Admin</p>
+              </div>
+            </div>
           </div>
-          <nav className="flex-1 p-3 flex flex-col gap-1">
-            {NAV.map(({ id, label, icon: Icon }) => (
-              <button key={id} onClick={() => setTab(id)}
-                className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm transition-colors w-full text-left
-                  ${tab === id ? 'bg-indigo-50 text-indigo-700 font-medium' : 'text-gray-600 hover:bg-gray-100'}`}>
-                <Icon size={16} /> {label}
-              </button>
-            ))}
+          <nav className="flex-1 p-3 flex flex-col gap-0.5 overflow-y-auto">
+            {NAV.map(({ id, label, icon: Icon }) => {
+              const active = tab === id;
+              return (
+                <button key={id} onClick={() => setTab(id)}
+                  className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 w-full text-left active:scale-95"
+                  style={active
+                    ? { background: '#9A3412', color: '#FFF0EB', boxShadow: '0 2px 8px rgba(154,52,18,0.2)' }
+                    : { color: '#78716C' }}
+                  onMouseEnter={e => { if (!active) { e.currentTarget.style.background = 'rgba(214,211,209,0.4)'; e.currentTarget.style.color = '#2E1A12'; } }}
+                  onMouseLeave={e => { if (!active) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#78716C'; } }}>
+                  <Icon size={15} />{label}
+                </button>
+              );
+            })}
           </nav>
-          <div className="p-3 border-t border-gray-200">
-            <div className="px-3 py-2 text-xs text-gray-500 truncate">{session?.name}</div>
+          <div className="p-3" style={{ borderTop: '1px solid #D6D3D1' }}>
+            <div className="flex items-center gap-2 px-3 py-2 rounded-xl mb-1" style={{ background: 'rgba(214,211,209,0.3)' }}>
+              <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black shrink-0" style={{ background: '#9A3412', color: '#FFF0EB' }}>
+                {session?.name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0,2) || 'AD'}
+              </div>
+              <span className="text-xs font-medium truncate" style={{ color: '#78716C' }}>{session?.name}</span>
+            </div>
             <button onClick={logout}
-              className="flex items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-50 rounded-lg w-full">
+              className="flex items-center gap-2 px-3 py-2 text-sm font-semibold rounded-xl w-full transition-all duration-150 active:scale-95"
+              style={{ color: '#991B1B' }}
+              onMouseEnter={e => e.currentTarget.style.background = '#FEF2F2'}
+              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
               <LogOut size={14} /> Logout
             </button>
           </div>
@@ -73,8 +101,6 @@ function AdminLayout() {
 
 function AppRouter() {
   const { session, login } = useAuth();
-  const [page, setPage]           = useState('login');
-  // firstTimeSetup: { userId, name } when pending cashier logs in
   const [setupData, setSetupData] = useState(null);
 
   // Role-based routing guard
@@ -106,14 +132,7 @@ function AppRouter() {
     login(data);
   };
 
-  return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-      {page === 'login'
-        ? <LoginCard onSwitchToSignUp={() => setPage('signup')} onLogin={handleLogin} />
-        : <SignUpCard onSwitchToLogin={() => setPage('login')} />
-      }
-    </div>
-  );
+  return <AuthPortal onLogin={handleLogin} />;
 }
 
 export default function App() {
