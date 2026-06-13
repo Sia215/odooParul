@@ -10,12 +10,16 @@ const API = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 const DEFAULT_TAX = 5;
 
 export default function OrderView() {
-  const { searchQuery, editingOrder, setEditingOrder, currentCustomer, unlinkCustomer, navigate } = usePOS();
+  const {
+    searchQuery, editingOrder, setEditingOrder,
+    currentCustomer, unlinkCustomer, navigate,
+    currentTable, markTableActive, markTableInactive,
+  } = usePOS();
 
-  const [cartItems,      setCartItems]      = useState([]);
-  const [selectedItemId, setSelectedItemId] = useState(null);
-  const [sendingToKitchen, setSending]      = useState(false);
-  const [kitchenMsg, setKitchenMsg]         = useState(null);
+  const [cartItems,        setCartItems]      = useState([]);
+  const [selectedItemId,   setSelectedItemId] = useState(null);
+  const [sendingToKitchen, setSending]        = useState(false);
+  const [kitchenMsg,       setKitchenMsg]     = useState(null);
 
   // Restore draft order into cart when editingOrder is set
   useEffect(() => {
@@ -55,10 +59,8 @@ export default function OrderView() {
     setSelectedItemId((s) => s === id ? null : s);
   };
 
-  // ── Subtotal (before discount) ──────────────────────────────────
   const subtotal = cartItems.reduce((s, i) => s + i.price * i.qty, 0);
 
-  // ── Hooks ───────────────────────────────────────────────────────
   const {
     coupon, applyCoupon, removeCoupon,
     manualPct, setManualPct,
@@ -67,17 +69,43 @@ export default function OrderView() {
   } = useDiscount(subtotal, DEFAULT_TAX);
 
   const { itemPromos, orderPromo, promoDiscAmt } = usePromotions(cartItems, subtotal);
-
-  // Grand total including promo savings
   const grandTotal = Math.max(0, finalTotal - promoDiscAmt);
 
-  // ── Send to Kitchen ────────────────────────────────────────────
+  const getHeaders = () => {
+    const token = JSON.parse(localStorage.getItem('pos_session') || '{}')?.token;
+    return { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) };
+  };
+
+  // Mark table occupied in backend
+  const occupyTable = async (tableId, orderId) => {
+    try {
+      await fetch(`${API}/tables/${tableId}/occupy`, {
+        method: 'PATCH',
+        headers: getHeaders(),
+        body: JSON.stringify({ occupied: true, orderId }),
+      });
+      markTableActive(tableId);
+    } catch (_) {}
+  };
+
+  // Free table in backend
+  const freeTable = async (tableId) => {
+    try {
+      await fetch(`${API}/tables/${tableId}/occupy`, {
+        method: 'PATCH',
+        headers: getHeaders(),
+        body: JSON.stringify({ occupied: false }),
+      });
+      markTableInactive(tableId);
+    } catch (_) {}
+  };
+
+  // Send to Kitchen
   const handleSendToKitchen = async () => {
     if (cartItems.length === 0) return;
     setSending(true);
     setKitchenMsg(null);
     try {
-      // Step 1: save/create a Draft order
       const orderPayload = {
         items: cartItems.map(i => ({
           productId: i._id,
@@ -87,7 +115,7 @@ export default function OrderView() {
           category:  i.category || {},
         })),
         customer:    currentCustomer?.name || 'Walk-in',
-        table:       {},
+        table:       currentTable ? { number: String(currentTable.number), floor: currentTable.floor } : {},
         subtotal,
         taxAmt,
         discountAmt: totalDiscAmt + promoDiscAmt,
@@ -95,23 +123,20 @@ export default function OrderView() {
         status:      'Draft',
       };
 
-      const token = JSON.parse(localStorage.getItem('pos_session') || '{}')?.token;
-      const headers = { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) };
-
       const orderRes = await fetch(`${API}/orders`, {
-        method: 'POST', headers, body: JSON.stringify(orderPayload),
+        method: 'POST', headers: getHeaders(), body: JSON.stringify(orderPayload),
       });
       const order = await orderRes.json();
       if (!orderRes.ok) throw new Error(order.message || 'Failed to save order');
 
-      // Step 2: send to KDS — use same base URL
-      const kdsRes = await fetch(`${API.replace('/api','')}/api/kds/orders/${order._id}/send`, {
-        method: 'POST', headers,
+      // Mark table occupied
+      if (currentTable?._id) await occupyTable(currentTable._id, order._id);
+
+      // Send to KDS
+      const kdsRes = await fetch(`${API.replace('/api', '')}/api/kds/orders/${order._id}/send`, {
+        method: 'POST', headers: getHeaders(),
       });
-      if (!kdsRes.ok) {
-        const kdsErr = await kdsRes.json().catch(() => ({}));
-        throw new Error(kdsErr.message || 'Failed to send to kitchen');
-      }
+      if (!kdsRes.ok) throw new Error('Failed to send to kitchen');
 
       setKitchenMsg({ ok: true, text: `✓ ${order.orderNumber} sent to kitchen!` });
       setCartItems([]);
@@ -123,30 +148,29 @@ export default function OrderView() {
     }
   };
 
-  // ── Numpad → mutate selected item ──────────────────────────────
+  // Called by PaymentPanel when charge is completed
+  const handleCharge = async (orderId) => {
+    if (currentTable?._id) await freeTable(currentTable._id);
+  };
+
   const handleNumpadInput = useCallback((value, mode) => {
     if (!selectedItemId) return;
     const num = parseFloat(value);
     if (isNaN(num) || num < 0) return;
-
-    if (mode === 'Qty') {
-      setCartItems((p) => p.map((i) => i._id === selectedItemId ? { ...i, qty: Math.max(1, Math.floor(num)) } : i));
-    } else if (mode === 'Price') {
-      setCartItems((p) => p.map((i) => i._id === selectedItemId ? { ...i, price: num } : i));
-    } else if (mode === 'Disc.') {
-      setManualPct(Math.min(100, Math.max(0, num)));
-    }
+    if (mode === 'Qty')   setCartItems((p) => p.map((i) => i._id === selectedItemId ? { ...i, qty: Math.max(1, Math.floor(num)) } : i));
+    if (mode === 'Price') setCartItems((p) => p.map((i) => i._id === selectedItemId ? { ...i, price: num } : i));
+    if (mode === 'Disc.') setManualPct(Math.min(100, Math.max(0, num)));
   }, [selectedItemId, setManualPct]);
 
   return (
     <div className="flex h-full overflow-hidden">
 
-      {/* ── Col 1: Products ── */}
+      {/* Col 1: Products */}
       <div className="flex-1 min-w-0 overflow-hidden border-r border-gray-100">
         <ProductGrid searchQuery={searchQuery} onAddToCart={handleAddToCart} />
       </div>
 
-      {/* ── Col 2: Cart ── */}
+      {/* Col 2: Cart */}
       <div className="w-72 xl:w-80 shrink-0 overflow-hidden border-r border-gray-100 flex flex-col">
         {kitchenMsg && (
           <div className={`mx-3 mt-2 px-3 py-2 rounded-lg text-xs font-semibold text-center
@@ -185,12 +209,15 @@ export default function OrderView() {
         />
       </div>
 
-      {/* ── Col 3: Payment ── */}
+      {/* Col 3: Payment */}
       <div className="w-64 xl:w-72 shrink-0 overflow-hidden flex flex-col">
         <PaymentPanel
           total={grandTotal}
           onNumpadInput={handleNumpadInput}
           onModeChange={() => {}}
+          onCharge={handleCharge}
+          currentTable={currentTable}
+          onFreeTable={freeTable}
         />
       </div>
     </div>

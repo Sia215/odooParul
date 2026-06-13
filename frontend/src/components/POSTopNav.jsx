@@ -13,6 +13,7 @@ const NAV_TABS = [
   { id: 'orders',      label: 'Orders',     icon: ClipboardList },
   { id: 'customers',   label: 'Customer',   icon: Users },
   { id: 'table-view',  label: 'Table View', icon: LayoutGrid },
+  { id: 'reports',     label: 'Reports',    icon: BarChart2 },
 ];
 
 // ── Hamburger menu items ──────────────────────────────────────────
@@ -32,7 +33,7 @@ const MENU_SECTIONS = [
       { id: 'coupons',    label: 'Coupons & Promos',   icon: Ticket,       admin: true },
       { id: 'booking',    label: 'Booking',            icon: BookOpen,     admin: true },
       { id: 'employees',  label: 'Users / Employees',  icon: UserCog,      admin: true },
-      { id: 'reports',    label: 'Reports',            icon: BarChart2,    admin: true },
+      { id: 'reports',    label: 'Reports',            icon: BarChart2,    admin: false },
     ],
   },
 ];

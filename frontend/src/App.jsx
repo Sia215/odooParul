@@ -13,7 +13,8 @@ import FloorPlanPage from './pages/admin/FloorPlanPage';
 import CouponsPage from './pages/admin/CouponsPage';
 import PromotionsPage from './pages/admin/PromotionsPage';
 import EmployeesPage from './pages/admin/EmployeesPage';
-import { LayoutGrid, Tag, CreditCard, Building2, Ticket, Zap, Users, LogOut } from 'lucide-react';
+import { LayoutGrid, Tag, CreditCard, Building2, Ticket, Zap, Users, LogOut, BarChart2 } from 'lucide-react';
+import ReportsPage from './pages/pos/ReportsPage';
 
 const NAV = [
   { id: 'products',   label: 'Products',   icon: LayoutGrid },
@@ -23,6 +24,7 @@ const NAV = [
   { id: 'coupons',    label: 'Coupons',    icon: Ticket },
   { id: 'promotions', label: 'Promotions', icon: Zap },
   { id: 'employees',  label: 'Employees',  icon: Users },
+  { id: 'reports',    label: 'Reports',    icon: BarChart2 },
 ];
 
 function AdminLayout() {
@@ -62,6 +64,7 @@ function AdminLayout() {
           {tab === 'coupons'    && <CouponsPage />}
           {tab === 'promotions' && <PromotionsPage />}
           {tab === 'employees'  && <EmployeesPage />}
+          {tab === 'reports'    && <ReportsPage />}
         </main>
       </div>
     </CategoryProvider>

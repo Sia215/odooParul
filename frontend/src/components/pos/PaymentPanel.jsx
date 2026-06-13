@@ -12,7 +12,7 @@ const NUMPAD_KEYS = [
   '+/-', '0', '⌫',
 ];
 
-export default function PaymentPanel({ total, onNumpadInput, onModeChange }) {
+export default function PaymentPanel({ total, onNumpadInput, onModeChange, onCharge, currentTable, onFreeTable }) {
   const [payConfig,     setPayConfig]     = useState(null);
   const [activeMethod,  setActiveMethod]  = useState(null);
   const [numpadMode,    setNumpadMode]    = useState('Qty');
@@ -166,6 +166,7 @@ export default function PaymentPanel({ total, onNumpadInput, onModeChange }) {
       <div className="px-3 pb-3 shrink-0">
         <button
           disabled={!activeMethod || total === 0}
+          onClick={() => { if (onFreeTable && currentTable?._id) onFreeTable(currentTable._id); onCharge?.(); }}
           className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-200 disabled:text-gray-400 text-white rounded-xl text-sm font-bold transition-all shadow-md shadow-indigo-200 disabled:shadow-none active:scale-95"
         >
           {activeMethod ? `Charge ₹${total.toFixed(2)} · ${activeMethod.toUpperCase()}` : 'Select Payment Method'}

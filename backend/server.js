@@ -20,6 +20,7 @@ const employeeRoutes       = require('./routes/employees');
 const orderRoutes          = require('./routes/orders');
 const customerRoutes       = require('./routes/customers');
 const kdsRoutes            = require('./routes/kds');
+const reportRoutes         = require('./routes/reports');
 
 const app    = express();
 const server = http.createServer(app);
@@ -54,6 +55,7 @@ app.use('/api/employees', employeeRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/customers', customerRoutes);
 app.use('/api/kds', kdsRoutes);
+app.use('/api/reports', reportRoutes);
 
 // Serve React build — only for non-API routes
 app.use(express.static(path.join(__dirname, 'public')));

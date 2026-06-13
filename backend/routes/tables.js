@@ -39,6 +39,22 @@ router.put('/:id', async (req, res) => {
   }
 });
 
+// PATCH /api/tables/:id/occupy  — mark table occupied or free
+router.patch('/:id/occupy', async (req, res) => {
+  try {
+    const { occupied, orderId } = req.body;
+    const table = await Table.findByIdAndUpdate(
+      req.params.id,
+      { occupied: !!occupied, currentOrderId: occupied ? (orderId || null) : null },
+      { new: true }
+    );
+    if (!table) return res.status(404).json({ message: 'Table not found.' });
+    res.json(table);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 // PATCH /api/tables/:id/status  — toggle active
 router.patch('/:id/status', async (req, res) => {
   try {

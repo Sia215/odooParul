@@ -5,8 +5,8 @@ import { usePOS } from '../context/POSContext';
 const API = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 // ── Individual table card ─────────────────────────────────────────
-function TableCard({ table, floorName, isSelected, isOccupied, onSelect }) {
-  const state = isSelected ? 'selected' : isOccupied ? 'occupied' : 'vacant';
+function TableCard({ table, floorName, isSelected, onSelect }) {
+  const state = isSelected ? 'selected' : table.occupied ? 'occupied' : 'vacant';
 
   const styles = {
     selected: 'bg-indigo-600 border-indigo-500 text-white shadow-lg shadow-indigo-200 scale-105',
@@ -57,7 +57,7 @@ function TableCard({ table, floorName, isSelected, isOccupied, onSelect }) {
 
 // ── Main Modal ────────────────────────────────────────────────────
 export default function TableSelectorModal() {
-  const { currentTable, selectTable, closeTableModal, activeTables } = usePOS();
+  const { currentTable, selectTable, closeTableModal } = usePOS();
   const [floors,       setFloors]       = useState([]);
   const [activeFloor,  setActiveFloor]  = useState(null); // floor._id
   const [loading,      setLoading]      = useState(true);
@@ -204,7 +204,6 @@ export default function TableSelectorModal() {
                   table={table}
                   floorName={currentFloorData.name}
                   isSelected={currentTable?._id === table._id}
-                  isOccupied={activeTables.has(table._id)}
                   onSelect={selectTable}
                 />
               ))}
