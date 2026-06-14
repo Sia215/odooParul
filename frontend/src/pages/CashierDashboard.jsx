@@ -13,13 +13,17 @@ import CategoriesPage from './admin/CategoriesPage';
 import PaymentMethodsPage from './admin/PaymentMethodsPage';
 import CouponsPage from './admin/CouponsPage';
 import EmployeesPage from './admin/EmployeesPage';
+import SessionGate from '../components/SessionGate';
+import SessionSummaryModal from '../components/SessionSummaryModal';
 
 function POSShell() {
-  const { activeView, adminBlockModal, tableModal, currentTable, openTableModal } = usePOS();
+  const { activeView, adminBlockModal, tableModal, currentTable, openTableModal, posSession, closingSummary } = usePOS();
 
   useEffect(() => {
-    if (!currentTable) openTableModal();
-  }, []);
+    if (posSession && !currentTable) openTableModal();
+  }, [posSession]);
+
+  if (!posSession) return <SessionGate />;
 
   return (
     <div className="h-screen flex flex-col bg-gray-50 overflow-hidden">
@@ -37,6 +41,7 @@ function POSShell() {
       </main>
       {tableModal      && <TableSelectorModal />}
       {adminBlockModal && <AdminBlockModal />}
+      {closingSummary  && <SessionSummaryModal />}
     </div>
   );
 }

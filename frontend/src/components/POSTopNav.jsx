@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import {
   ShoppingCart, ClipboardList, Users, LayoutGrid, Search,
-  MapPin, Menu, X, LogOut, ChefHat, Tag, CreditCard, Ticket, UserCog, Coffee,
+  MapPin, Menu, X, LogOut, ChefHat, Tag, CreditCard, Ticket, UserCog, Coffee, StopCircle,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { usePOS } from '../context/POSContext';
@@ -50,6 +50,7 @@ export default function POSTopNav() {
     searchQuery, setSearchQuery,
     isMenuOpen, setIsMenuOpen,
     requireAdmin, openTableModal,
+    closeSession,
   } = usePOS();
 
   const menuRef = useRef(null);
@@ -168,6 +169,13 @@ export default function POSTopNav() {
                 </div>
               ))}
               <div className="border-t mt-1" style={{ borderColor: '#D6D3D1' }}>
+                <button onClick={() => { setIsMenuOpen(false); closeSession(); }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm transition-all"
+                  style={{ color: '#B45309' }}
+                  onMouseEnter={e => e.currentTarget.style.background = '#FFFBEB'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                  <StopCircle size={14} /> Close Session
+                </button>
                 <button onClick={() => { setIsMenuOpen(false); logout(); }}
                   className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm transition-all"
                   style={{ color: '#9A3412' }}

@@ -102,6 +102,7 @@ export default function OrderView() {
     searchQuery, editingOrder, setEditingOrder,
     currentCustomer, unlinkCustomer, navigate,
     currentTable, markTableActive, markTableInactive,
+    recordSale,
   } = usePOS();
 
   const [cartItems,        setCartItems]      = useState([]);
@@ -263,6 +264,9 @@ export default function OrderView() {
       }
 
       if (currentTable?._id) await freeTable(currentTable._id);
+
+      // Record sale in session
+      recordSale(grandTotal);
 
       // Save state before clearing cart
       const email = currentCustomer?.email || null;
