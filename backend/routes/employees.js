@@ -5,13 +5,27 @@ const { authMiddleware, adminOnly } = require('../middleware/auth');
 
 const router = express.Router();
 
-// GET /api/employees — list all cashier accounts
-router.get('/', authMiddleware, adminOnly, async (req, res) => {
+// GET /api/employees — admin gets cashiers only; cashier gets all users
+router.get('/', authMiddleware, async (req, res) => {
   try {
-    const employees = await User.find({ role: 'CASHIER' })
-      .select('-password')
-      .sort({ createdAt: -1 });
-    res.json(employees);
+    const isAdmin = req.user?.role === 'ADMIN';
+    const query   = isAdmin ? { role: 'CASHIER' } : {};
+    const users   = await User.find(query)
+      .select('name email phone role status')
+      .sort({ role: 1, name: 1 });
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// GET /api/employees/all — list all users (admin + cashier) for authenticated users
+router.get('/all', authMiddleware, async (req, res) => {
+  try {
+    const users = await User.find()
+      .select('name email phone role status')
+      .sort({ role: 1, name: 1 });
+    res.json(users);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

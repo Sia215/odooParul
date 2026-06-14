@@ -2,11 +2,16 @@ import { useEffect, useState, useRef } from 'react';
 import { Plus, Trash2, Archive, KeyRound, X, UserPlus, Users } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
+const ROLE_STYLES = {
+  ADMIN:   { background: '#FFF0EB', color: '#9A3412', border: '1px solid #FBBFA3' },
+  CASHIER: { background: '#EFF6FF', color: '#1D4ED8', border: '1px solid #BFDBFE' },
+};
+
 const API = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 const KDS_BADGE = {
   to_cook:   { label: '🍳 In Kitchen',  bg: '#FFFBEB', color: '#92400E', border: '#FDE68A' },
-  preparing: { label: '👨🍳 Preparing', bg: '#FFF7ED', color: '#C2410C', border: '#FED7AA' },
+  preparing: { label: '👨‍🍳 Preparing', bg: '#FFF7ED', color: '#C2410C', border: '#FED7AA' },
   completed: { label: '✅ Ready',       bg: '#F0FDF4', color: '#166534', border: '#BBF7D0' },
 };
 
@@ -158,18 +163,22 @@ export default function EmployeesPage({ readOnly = false }) {
   const { authHeader } = useAuth();
   const [employees,    setEmployees]   = useState([]);
   const [loading,      setLoading]     = useState(true);
+  const [fetchError,   setFetchError]  = useState('');
   const [showInvite,   setShowInvite]  = useState(false);
   const [pwEmployee,   setPwEmployee]  = useState(null);
-  const [orderStatus,  setOrderStatus] = useState({}); // cashierName.lower -> kdsStage
+  const [orderStatus,  setOrderStatus] = useState({});
   const wsRef = useRef(null);
 
   const fetchEmployees = async () => {
-    setLoading(true);
+    setLoading(true); setFetchError('');
     try {
-      const res  = await fetch(`${API}/employees`, { headers: authHeader() });
+      const endpoint = `${API}/employees`;
+      const res  = await fetch(endpoint, { headers: { 'Content-Type': 'application/json', ...authHeader() } });
       const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Failed');
       setEmployees(Array.isArray(data) ? data : []);
-    } catch (_) {
+    } catch (err) {
+      setFetchError(err.message);
       setEmployees([]);
     } finally {
       setLoading(false);
@@ -213,7 +222,7 @@ export default function EmployeesPage({ readOnly = false }) {
 
   useEffect(() => {
     fetchEmployees();
-  }, []);
+  }, [readOnly]);
 
   const handleInvited = async (emp) => {
     await fetchEmployees();
@@ -242,7 +251,7 @@ export default function EmployeesPage({ readOnly = false }) {
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-xl font-black" style={{ color: '#2E1A12', fontFamily: 'Georgia, serif' }}>Employees</h1>
-          <p className="text-sm mt-0.5" style={{ color: '#A8A29E' }}>{employees.length} accounts</p>
+          <p className="text-sm mt-0.5" style={{ color: '#A8A29E' }}>{employees.length} {readOnly ? 'users' : 'accounts'}</p>
         </div>
         {!readOnly && (
           <button onClick={() => setShowInvite(true)}
@@ -261,13 +270,18 @@ export default function EmployeesPage({ readOnly = false }) {
         ) : employees.length === 0 ? (
           <div className="text-center py-12">
             <Users size={36} className="mx-auto mb-2 opacity-30" style={{ color: '#9A3412' }} />
-            <p className="text-sm" style={{ color: '#A8A29E' }}>No employees yet. Invite one!</p>
+            <p className="text-sm" style={{ color: '#A8A29E' }}>
+              {fetchError ? `Error: ${fetchError}` : 'No employees yet. Invite one!'}
+            </p>
           </div>
         ) : (
           <table className="w-full text-sm">
             <thead style={{ background: '#F4F4ED', borderBottom: '1.5px solid #D6D3D1' }}>
               <tr>
-                {['Name', 'Email', 'Phone', 'Status', 'Order Status', ...(!readOnly ? ['Actions'] : [])].map((h) => (
+                {[
+                  'Name', 'Email', 'Phone', 'Role', 'Status',
+                  ...(!readOnly ? ['Order Status', 'Actions'] : []),
+                ].map((h) => (
                   <th key={h} className="text-left px-4 py-3 text-xs font-bold uppercase tracking-widest" style={{ color: '#A8A29E' }}>{h}</th>
                 ))}
               </tr>
@@ -286,48 +300,55 @@ export default function EmployeesPage({ readOnly = false }) {
                   <td className="px-4 py-3" style={{ color: '#78716C' }}>{emp.email}</td>
                   <td className="px-4 py-3" style={{ color: '#78716C' }}>{emp.phone || '—'}</td>
                   <td className="px-4 py-3">
+                    <span className="text-xs px-2.5 py-1 rounded-full font-semibold" style={ROLE_STYLES[emp.role] || ROLE_STYLES.CASHIER}>
+                      {emp.role}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3">
                     <span className="text-xs px-2.5 py-1 rounded-full font-semibold" style={STATUS_STYLES[emp.status]}>
                       {emp.status}
                     </span>
                   </td>
-                  <td className="px-4 py-3">
-                    {orderStatus[emp.name.toLowerCase()] ? (
-                      <span className="text-xs px-2.5 py-1 rounded-full font-semibold"
-                        style={{
-                          background: KDS_BADGE[orderStatus[emp.name.toLowerCase()]]?.bg,
-                          color:      KDS_BADGE[orderStatus[emp.name.toLowerCase()]]?.color,
-                          border:     `1px solid ${KDS_BADGE[orderStatus[emp.name.toLowerCase()]]?.border}`,
-                        }}>
-                        {KDS_BADGE[orderStatus[emp.name.toLowerCase()]]?.label}
-                      </span>
-                    ) : <span style={{ color: '#D6D3D1' }}>—</span>}
-                  </td>
                   {!readOnly && (
-                    <td className="px-4 py-3">
-                      <div className="flex gap-1">
-                        <button onClick={() => setPwEmployee(emp)} title="Reset Password"
-                          className="p-1.5 rounded-lg transition-all duration-150"
-                          style={{ color: '#9A3412' }}
-                          onMouseEnter={e => e.currentTarget.style.background = '#FFF0EB'}
-                          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                          <KeyRound size={14} />
-                        </button>
-                        <button onClick={() => handleArchive(emp)} title={emp.status === 'ARCHIVED' ? 'Unarchive' : 'Archive'}
-                          className="p-1.5 rounded-lg transition-all duration-150"
-                          style={{ color: emp.status === 'ARCHIVED' ? '#166534' : '#92400E' }}
-                          onMouseEnter={e => e.currentTarget.style.background = emp.status === 'ARCHIVED' ? '#F0FDF4' : '#FFFBEB'}
-                          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                          <Archive size={14} />
-                        </button>
-                        <button onClick={() => handleDelete(emp._id)} title="Delete"
-                          className="p-1.5 rounded-lg transition-all duration-150"
-                          style={{ color: '#991B1B' }}
-                          onMouseEnter={e => e.currentTarget.style.background = '#FEF2F2'}
-                          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    </td>
+                    <>
+                      <td className="px-4 py-3">
+                        {orderStatus[emp.name.toLowerCase()] ? (
+                          <span className="text-xs px-2.5 py-1 rounded-full font-semibold"
+                            style={{
+                              background: KDS_BADGE[orderStatus[emp.name.toLowerCase()]]?.bg,
+                              color:      KDS_BADGE[orderStatus[emp.name.toLowerCase()]]?.color,
+                              border:     `1px solid ${KDS_BADGE[orderStatus[emp.name.toLowerCase()]]?.border}`,
+                            }}>
+                            {KDS_BADGE[orderStatus[emp.name.toLowerCase()]]?.label}
+                          </span>
+                        ) : <span style={{ color: '#D6D3D1' }}>—</span>}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex gap-1">
+                          <button onClick={() => setPwEmployee(emp)} title="Reset Password"
+                            className="p-1.5 rounded-lg transition-all duration-150"
+                            style={{ color: '#9A3412' }}
+                            onMouseEnter={e => e.currentTarget.style.background = '#FFF0EB'}
+                            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                            <KeyRound size={14} />
+                          </button>
+                          <button onClick={() => handleArchive(emp)} title={emp.status === 'ARCHIVED' ? 'Unarchive' : 'Archive'}
+                            className="p-1.5 rounded-lg transition-all duration-150"
+                            style={{ color: emp.status === 'ARCHIVED' ? '#166534' : '#92400E' }}
+                            onMouseEnter={e => e.currentTarget.style.background = emp.status === 'ARCHIVED' ? '#F0FDF4' : '#FFFBEB'}
+                            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                            <Archive size={14} />
+                          </button>
+                          <button onClick={() => handleDelete(emp._id)} title="Delete"
+                            className="p-1.5 rounded-lg transition-all duration-150"
+                            style={{ color: '#991B1B' }}
+                            onMouseEnter={e => e.currentTarget.style.background = '#FEF2F2'}
+                            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </td>
+                    </>
                   )}
                 </tr>
               ))}

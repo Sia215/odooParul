@@ -54,6 +54,9 @@ router.post('/login', async (req, res) => {
     const match = await bcrypt.compare(password, user.password);
     if (!match) return res.status(401).json({ message: 'Invalid credentials.' });
 
+    // Self-heal missing role (legacy accounts created before role field existed)
+    if (!user.role) { user.role = 'ADMIN'; await user.save(); }
+
     const token = signToken(user);
     res.json({
       message:  'Login successful.',
