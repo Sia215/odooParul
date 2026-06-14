@@ -168,11 +168,21 @@ export default function KDSPage() {
     } catch (_) {}
   }, []);
 
+  const STAGE_ORDER = { to_cook: 0, preparing: 1, completed: 2, archived: 3 };
+
   const upsert = useCallback((incoming) => {
     setOrders(prev => {
       const idx = prev.findIndex(o => o.id === incoming.id);
       if (idx === -1) return [...prev, incoming];
-      const next = [...prev]; next[idx] = incoming; return next;
+      const existing = prev[idx];
+      // Keep local stage if it's ahead of what the server broadcast
+      const merged = {
+        ...incoming,
+        stage: (STAGE_ORDER[incoming.stage] ?? 0) >= (STAGE_ORDER[existing.stage] ?? 0)
+          ? incoming.stage
+          : existing.stage,
+      };
+      const next = [...prev]; next[idx] = merged; return next;
     });
   }, []);
 
@@ -231,12 +241,15 @@ export default function KDSPage() {
   };
 
   const handleItem = async (orderId, itemId, done) => {
-    // Optimistic update only — server response via WS broadcast
+    let newStage;
     setOrders(prev => prev.map(o => {
       if (o.id !== orderId) return o;
       const updatedItems = o.items.map(it => it.id === itemId ? { ...it, done } : it);
-      const allDone = updatedItems.filter(it => it.showOnKDS).every(it => it.done);
-      return { ...o, items: updatedItems, stage: allDone ? 'completed' : o.stage };
+      const visibleItems = updatedItems.filter(it => it.showOnKDS);
+      const anyDone = visibleItems.some(it => it.done);
+      const allDone = visibleItems.every(it => it.done);
+      newStage = allDone ? 'completed' : anyDone ? 'preparing' : 'to_cook';
+      return { ...o, items: updatedItems, stage: newStage };
     }));
     try {
       await fetch(`${API}/api/kds/orders/${orderId}/items/${itemId}`, {
@@ -244,6 +257,13 @@ export default function KDSPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ done }),
       });
+      if (newStage) {
+        await fetch(`${API}/api/kds/orders/${orderId}/stage`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ stage: newStage }),
+        });
+      }
     } catch (_) {}
   };
 

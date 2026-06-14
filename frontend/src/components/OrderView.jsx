@@ -111,6 +111,7 @@ export default function OrderView() {
   const [selectedItemId,   setSelectedItemId] = useState(null);
   const [sendingToKitchen, setSending]        = useState(false);
   const [kitchenMsg,       setKitchenMsg]     = useState(null);
+  const [sentToKitchen,    setSentToKitchen]  = useState(false);
   const [editingOrderId,   setEditingOrderId] = useState(null);
   const [paidOrder,        setPaidOrder]      = useState(null);
   const [showBill,         setShowBill]       = useState(false);
@@ -135,6 +136,7 @@ export default function OrderView() {
   }, [editingOrder]);
 
   const handleAddToCart = useCallback((product) => {
+    setSentToKitchen(false);
     setCartItems((prev) => {
       const exists = prev.find((i) => i._id === product._id);
       if (exists) return prev.map((i) => i._id === product._id ? { ...i, qty: i.qty + 1 } : i);
@@ -231,6 +233,7 @@ export default function OrderView() {
       });
 
       setKitchenMsg({ ok: true, text: `✓ ${order.orderNumber} sent to kitchen!` });
+      setSentToKitchen(true);
       setTimeout(() => setKitchenMsg(null), 4000);
     } catch (err) {
       setKitchenMsg({ ok: false, text: err.message });
@@ -415,6 +418,7 @@ export default function OrderView() {
           onUnlinkCustomer={unlinkCustomer}
           onSendToKitchen={handleSendToKitchen}
           sendingToKitchen={sendingToKitchen}
+          sentToKitchen={sentToKitchen}
           onSendBill={handleSendBillFromCart}
           onNotesChange={handleNotesChange}
         />

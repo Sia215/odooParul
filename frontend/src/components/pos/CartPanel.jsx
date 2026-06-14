@@ -12,7 +12,7 @@ export default function CartPanel({
   couponLoading, couponError, couponSuccess,
   itemPromos, orderPromo,
   currentCustomer, onOpenCustomers, onUnlinkCustomer,
-  onSendToKitchen, sendingToKitchen,
+  onSendToKitchen, sendingToKitchen, sentToKitchen,
   onSendBill,
   onNotesChange,
 }) {
@@ -158,13 +158,17 @@ export default function CartPanel({
         <div className="px-3 pt-2 shrink-0">
           <button
             onClick={onSendToKitchen}
-            disabled={sendingToKitchen}
+            disabled={sendingToKitchen || sentToKitchen}
             className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition-all active:scale-95 disabled:opacity-60"
-            style={{ background: '#92400E', color: '#FFFBEB', boxShadow: '0 4px 12px rgba(146,64,14,0.3)' }}
-            onMouseEnter={e => { if (!sendingToKitchen) e.currentTarget.style.background = '#78350F'; }}
-            onMouseLeave={e => e.currentTarget.style.background = '#92400E'}>
+            style={{
+              background: sentToKitchen ? '#166534' : '#92400E',
+              color: '#FFFBEB',
+              boxShadow: sentToKitchen ? '0 4px 12px rgba(22,101,52,0.3)' : '0 4px 12px rgba(146,64,14,0.3)'
+            }}
+            onMouseEnter={e => { if (!sendingToKitchen && !sentToKitchen) e.currentTarget.style.background = '#78350F'; }}
+            onMouseLeave={e => e.currentTarget.style.background = sentToKitchen ? '#166534' : '#92400E'}>
             <ChefHat size={15} />
-            {sendingToKitchen ? 'Sending…' : 'Send to Kitchen'}
+            {sendingToKitchen ? 'Sending…' : sentToKitchen ? '✓ Sent to Kitchen' : 'Send to Kitchen'}
           </button>
         </div>
       )}

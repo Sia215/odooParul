@@ -65,7 +65,7 @@ export function POSProvider({ children }) {
   const markTableInactive = (id) => setActiveTables((s) => { const n = new Set(s); n.delete(id); return n; });
   // Load a draft order into the cart for editing
   const editOrder = (order) => { setEditingOrder(order); setActiveView('pos-order'); };
-  const linkCustomer   = (customer) => { setCurrentCustomer(customer); setActiveView('pos-order'); };
+  const linkCustomer   = (customer) => { setCurrentCustomer(customer); };
   const unlinkCustomer = () => setCurrentCustomer(null);
 
   return (

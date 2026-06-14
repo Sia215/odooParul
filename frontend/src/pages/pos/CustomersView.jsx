@@ -92,7 +92,7 @@ function CustomerModal({ initial, onClose, onSave }) {
 // ── Main View ────────────────────────────────────────────────────
 export default function CustomersView() {
   const { authHeader }                          = useAuth();
-  const { currentCustomer, linkCustomer, unlinkCustomer, currentTable } = usePOS();
+  const { currentCustomer, linkCustomer, unlinkCustomer, currentTable, navigate } = usePOS();
 
   const [customers,    setCustomers]    = useState([]);
   const [search,       setSearch]       = useState('');
@@ -195,6 +195,7 @@ export default function CustomersView() {
     }
     // Link customer to order
     linkCustomer(customer);
+    navigate('pos-order');
     // Book the current table under this customer
     if (currentTable?._id) {
       await fetch(`${API}/customers/${customer._id}/book-table`, {

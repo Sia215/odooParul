@@ -1,5 +1,5 @@
-import { useEffect, useState, useMemo } from 'react';
-import { Plus, Pencil, Trash2, Check, X, ToggleLeft, ToggleRight, Users, Building2, Search } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Plus, Pencil, Trash2, Check, X, ToggleLeft, ToggleRight, Users, Building2 } from 'lucide-react';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -86,7 +86,7 @@ function TableRow({ table, onUpdate, onDelete, onToggle }) {
 }
 
 // ── Floor card with its tables ──────────────────────────────────
-function FloorCard({ floor, onFloorUpdate, onFloorDelete, onTableCreate, onTableUpdate, onTableDelete, onTableToggle }) {
+function FloorCard({ floor, totalTables, onFloorUpdate, onFloorDelete, onTableCreate, onTableUpdate, onTableDelete, onTableToggle }) {
   const [editingFloor, setEditingFloor] = useState(false);
   const [floorName, setFloorName]       = useState(floor.name);
   const [showAddTable, setShowAddTable] = useState(false);
@@ -130,7 +130,7 @@ function FloorCard({ floor, onFloorUpdate, onFloorDelete, onTableCreate, onTable
         ) : (
           <>
             <span className="flex-1 text-sm font-semibold text-gray-800">{floor.name}</span>
-            <span className="text-xs text-gray-400">{floor.tables?.length || 0} tables</span>
+            <span className="text-xs text-gray-400">{totalTables} tables</span>
             <button onClick={() => setEditingFloor(true)} className="p-1.5 text-indigo-400 hover:bg-indigo-50 rounded-lg">
               <Pencil size={13} />
             </button>
@@ -220,37 +220,22 @@ export default function FloorPlanPage() {
   const [showAddFloor, setShowAddFloor] = useState(false);
   const [newFloorName, setNewFloorName] = useState('');
   const [error, setError]         = useState('');
-  const [search, setSearch]       = useState('');
-  const [debSearch, setDebSearch] = useState('');
-
-  useEffect(() => {
-    const t = setTimeout(() => setDebSearch(search), 600);
-    return () => clearTimeout(t);
-  }, [search]);
-
-  const filtered = useMemo(() => {
-    if (!debSearch.trim()) return floors;
-    const q = debSearch.toLowerCase();
-    return floors
-      .map(f => ({
-        ...f,
-        tables: f.tables.filter(t => t.tableNumber.toLowerCase().includes(q)),
-      }))
-      .filter(f => f.name.toLowerCase().includes(q) || f.tables.length > 0);
-  }, [floors, debSearch]);
 
   const fetchFloors = async () => {
     setLoading(true);
-    const res  = await fetch(`${API}/floors`);
-    const data = await res.json();
-    // Fetch tables per floor
-    const tablesRes  = await fetch(`${API}/tables`);
-    const allTables  = await tablesRes.json();
-    const withTables = data.map((f) => ({
-      ...f,
-      tables: allTables.filter((t) => t.floor?._id === f._id || t.floor === f._id),
-    }));
-    setFloors(withTables);
+    try {
+      const [floorsRes, tablesRes] = await Promise.all([
+        fetch(`${API}/floors`).then(r => r.json()),
+        fetch(`${API}/tables`).then(r => r.json()),
+      ]);
+      const floorsData  = Array.isArray(floorsRes)  ? floorsRes  : [];
+      const tablesData  = Array.isArray(tablesRes)  ? tablesRes  : [];
+      const withTables  = floorsData.map(f => ({
+        ...f,
+        tables: tablesData.filter(t => String(t.floor?._id || t.floor) === String(f._id)),
+      }));
+      setFloors(withTables);
+    } catch (_) {}
     setLoading(false);
   };
 
@@ -291,9 +276,7 @@ export default function FloorPlanPage() {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.message);
-    setFloors((f) => f.map((x) =>
-      x._id === body.floor ? { ...x, tables: [...x.tables, data] } : x
-    ));
+    await fetchFloors();
   };
 
   const handleTableUpdate = async (id, body) => {
@@ -328,7 +311,7 @@ export default function FloorPlanPage() {
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-xl font-semibold text-gray-900">Floor Plan</h1>
-          <p className="text-sm text-gray-500">{filtered.length} floors configured</p>
+          <p className="text-sm text-gray-500">{floors.length} floors configured</p>
         </div>
         <button
           onClick={() => setShowAddFloor(true)}
@@ -336,12 +319,6 @@ export default function FloorPlanPage() {
         >
           <Plus size={15} /> Add Floor
         </button>
-      </div>
-
-      <div className="relative mb-4">
-        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search floors or tables..."
-          className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-xl outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 bg-white" />
       </div>
 
       {/* Add Floor form */}
@@ -368,9 +345,10 @@ export default function FloorPlanPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          {filtered.map((floor) => (
+          {floors.map((floor) => (
             <FloorCard
               key={floor._id} floor={floor}
+              totalTables={floor.tables?.length ?? 0}
               onFloorUpdate={handleFloorUpdate}
               onFloorDelete={handleFloorDelete}
               onTableCreate={handleTableCreate}
