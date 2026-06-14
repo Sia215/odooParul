@@ -1,9 +1,15 @@
-import { useEffect, useState, useMemo, useRef } from 'react';
-import { Search, X, Plus, Pencil, Trash2, UserCheck, User, Mail, Phone, CheckCircle2, Users } from 'lucide-react';
+import { useEffect, useState, useRef } from 'react';
+import { Search, X, Plus, Pencil, Trash2, UserCheck, User, Mail, Phone, CheckCircle2, Users, ChefHat, CheckCircle, Clock } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { usePOS }  from '../../context/POSContext';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
+const KDS_BADGE = {
+  to_cook:   { label: '🍳 Sent to Kitchen', cls: 'bg-amber-100 text-amber-700 border-amber-200' },
+  preparing: { label: '👨‍🍳 Preparing',       cls: 'bg-orange-100 text-orange-700 border-orange-200' },
+  completed: { label: '✅ Ready',            cls: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
+};
 
 // ── Create / Edit Modal ──────────────────────────────────────────
 function CustomerModal({ initial, onClose, onSave }) {
@@ -88,10 +94,51 @@ export default function CustomersView() {
   const { authHeader }                          = useAuth();
   const { currentCustomer, linkCustomer, unlinkCustomer, currentTable } = usePOS();
 
-  const [customers, setCustomers] = useState([]);
-  const [search,    setSearch]    = useState('');
-  const [loading,   setLoading]   = useState(true);
-  const [modal,     setModal]     = useState(null); // null | 'create' | customer-object
+  const [customers,    setCustomers]    = useState([]);
+  const [search,       setSearch]       = useState('');
+  const [loading,      setLoading]      = useState(true);
+  const [modal,        setModal]        = useState(null);
+  const [orderStatus,  setOrderStatus]  = useState({}); // { customerName: kdsStage }
+  const wsRef = useRef(null);
+
+  // Fetch today's active KDS orders and build customerName → stage map
+  const fetchOrderStatus = async () => {
+    try {
+      const res  = await fetch(`${API}/kds/orders`);
+      const data = await res.json();
+      if (!Array.isArray(data)) return;
+      const map = {};
+      data.forEach(o => { if (o.customerName) map[o.customerName.toLowerCase()] = o.stage; });
+      setOrderStatus(map);
+    } catch (_) {}
+  };
+
+  useEffect(() => {
+    fetchOrderStatus();
+    const wsBase = API.replace('http', 'ws').replace('/api', '');
+    let ws;
+    let retryTimer;
+    const connect = () => {
+      ws = new WebSocket(wsBase);
+      wsRef.current = ws;
+      ws.onmessage = (e) => {
+        try {
+          const { event, data } = JSON.parse(e.data);
+          if (event === 'order:update' || event === 'order:stage' || event === 'order:new') {
+            if (data.customerName) {
+              setOrderStatus(prev => ({ ...prev, [data.customerName.toLowerCase()]: data.stage }));
+            }
+            // Also re-fetch to catch any missed updates
+            fetchOrderStatus();
+          }
+        } catch (_) {}
+      };
+      ws.onclose = () => { retryTimer = setTimeout(connect, 3000); };
+      ws.onerror = () => {};
+    };
+    connect();
+    return () => { clearTimeout(retryTimer); ws?.close(); };
+  }, []);
 
   const fetchCustomers = async (q = '') => {
     setLoading(true);
@@ -223,15 +270,16 @@ export default function CustomersView() {
         ) : (
           <div className="flex flex-col gap-2">
             {customers.map((c) => {
-              const isLinked = currentCustomer?._id === c._id;
+              const isLinked  = currentCustomer?._id === c._id;
+              const isBooked  = c.bookedTable && !isLinked; // booked on another table
               return (
                 <div key={c._id}
                   className={`bg-white rounded-2xl border-2 p-3 flex items-center gap-3 transition-all
-                    ${isLinked ? 'border-indigo-400 shadow-sm shadow-indigo-100' : 'border-gray-100 hover:border-gray-200'}`}>
+                    ${isLinked ? 'border-indigo-400 shadow-sm shadow-indigo-100' : isBooked ? 'border-amber-200 bg-amber-50/50' : 'border-gray-100 hover:border-gray-200'}`}>
 
                   {/* Avatar */}
                   <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold shrink-0
-                    ${isLinked ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600'}`}>
+                    ${isLinked ? 'bg-indigo-600 text-white' : isBooked ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-600'}`}>
                     {c.name[0].toUpperCase()}
                   </div>
 
@@ -250,6 +298,17 @@ export default function CustomersView() {
                         </span>
                       )}
                     </div>
+                    {isBooked && (
+                      <span className="inline-flex items-center gap-1 mt-1 text-[10px] font-semibold px-2 py-0.5 rounded-full border bg-amber-100 text-amber-700 border-amber-200">
+                        🪑 Table Booked
+                      </span>
+                    )}
+                    {/* KDS order status badge */}
+                    {orderStatus[c.name.toLowerCase()] && (
+                      <span className={`inline-flex items-center gap-1 mt-1 text-[10px] font-semibold px-2 py-0.5 rounded-full border ${KDS_BADGE[orderStatus[c.name.toLowerCase()]]?.cls}`}>
+                        {KDS_BADGE[orderStatus[c.name.toLowerCase()]]?.label}
+                      </span>
+                    )}
                   </div>
 
                   {/* Actions */}
@@ -262,13 +321,17 @@ export default function CustomersView() {
                       className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
                       <Trash2 size={13} />
                     </button>
-                    <button onClick={() => handleSelect(c)}
+                    <button
+                      onClick={() => !isBooked && handleSelect(c)}
+                      disabled={isBooked}
                       className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-all ml-1
                         ${isLinked
                           ? 'bg-indigo-600 text-white hover:bg-indigo-700'
-                          : 'bg-gray-100 text-gray-600 hover:bg-indigo-50 hover:text-indigo-600'}`}>
+                          : isBooked
+                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed opacity-60'
+                            : 'bg-gray-100 text-gray-600 hover:bg-indigo-50 hover:text-indigo-600'}`}>
                       <UserCheck size={12} />
-                      {isLinked ? 'Linked' : 'Select'}
+                      {isLinked ? 'Linked' : isBooked ? 'Booked' : 'Select'}
                     </button>
                   </div>
                 </div>

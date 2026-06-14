@@ -32,8 +32,10 @@ const orderSchema = new mongoose.Schema({
 // Auto-generate order number before save
 orderSchema.pre('save', async function () {
   if (!this.isNew || this.orderNumber) return;
-  const count = await mongoose.model('Order').countDocuments();
-  this.orderNumber = `ORD-${String(count + 1).padStart(4, '0')}`;
+  const last = await mongoose.model('Order').findOne({}, { orderNumber: 1 }).sort({ createdAt: -1 });
+  const lastNum = last?.orderNumber ? parseInt(last.orderNumber.replace('ORD-', ''), 10) : 0;
+  const next = isNaN(lastNum) ? 1 : lastNum + 1;
+  this.orderNumber = `ORD-${String(next).padStart(4, '0')}`;
 });
 
 module.exports = mongoose.model('Order', orderSchema);

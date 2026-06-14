@@ -45,7 +45,7 @@ export function CategoryProvider({ children }) {
       };
 
       ws.onclose = () => { if (active) setTimeout(connect, 3000); };
-      ws.onerror = () => ws.close();
+      ws.onerror = () => {};
     };
     connect();
     return () => { active = false; wsRef.current?.close(); };

@@ -1,8 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Plus, Trash2, Archive, KeyRound, X, UserPlus, Users } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
+const KDS_BADGE = {
+  to_cook:   { label: '🍳 In Kitchen',  bg: '#FFFBEB', color: '#92400E', border: '#FDE68A' },
+  preparing: { label: '👨🍳 Preparing', bg: '#FFF7ED', color: '#C2410C', border: '#FED7AA' },
+  completed: { label: '✅ Ready',       bg: '#F0FDF4', color: '#166534', border: '#BBF7D0' },
+};
 
 const STATUS_STYLES = {
   PENDING:  { background: '#FFFBEB', color: '#92400E', border: '1px solid #FDE68A' },
@@ -150,10 +156,47 @@ function PasswordModal({ employee, onClose, authHeader }) {
 
 export default function EmployeesPage({ readOnly = false }) {
   const { authHeader } = useAuth();
-  const [employees, setEmployees] = useState([]);
-  const [loading, setLoading]     = useState(true);
-  const [showInvite, setShowInvite] = useState(false);
-  const [pwEmployee, setPwEmployee] = useState(null);
+  const [employees,    setEmployees]   = useState([]);
+  const [loading,      setLoading]     = useState(true);
+  const [showInvite,   setShowInvite]  = useState(false);
+  const [pwEmployee,   setPwEmployee]  = useState(null);
+  const [orderStatus,  setOrderStatus] = useState({}); // cashierName.lower -> kdsStage
+  const wsRef = useRef(null);
+
+  const fetchOrderStatus = async () => {
+    try {
+      const res  = await fetch(`${API}/kds/orders`);
+      const data = await res.json();
+      if (!Array.isArray(data)) return;
+      const map = {};
+      data.forEach(o => { if (o.customerName) map[o.customerName.toLowerCase()] = o.stage; });
+      setOrderStatus(map);
+    } catch (_) {}
+  };
+
+  useEffect(() => {
+    fetchOrderStatus();
+    const wsBase = API.replace('http', 'ws').replace('/api', '');
+    let ws; let retryTimer;
+    const connect = () => {
+      ws = new WebSocket(wsBase);
+      wsRef.current = ws;
+      ws.onmessage = (e) => {
+        try {
+          const { event, data } = JSON.parse(e.data);
+          if (['order:update','order:stage','order:new'].includes(event)) {
+            if (data.customerName)
+              setOrderStatus(prev => ({ ...prev, [data.customerName.toLowerCase()]: data.stage }));
+            fetchOrderStatus();
+          }
+        } catch (_) {}
+      };
+      ws.onclose = () => { retryTimer = setTimeout(connect, 3000); };
+      ws.onerror = () => {};
+    };
+    connect();
+    return () => { clearTimeout(retryTimer); ws?.close(); };
+  }, []);
 
   useEffect(() => {
     fetch(`${API}/employees`, { headers: authHeader() })
@@ -209,7 +252,7 @@ export default function EmployeesPage({ readOnly = false }) {
           <table className="w-full text-sm">
             <thead style={{ background: '#F4F4ED', borderBottom: '1.5px solid #D6D3D1' }}>
               <tr>
-                {['Name', 'Email', 'Phone', 'Status', ...(!readOnly ? ['Actions'] : [])].map((h) => (
+                {['Name', 'Email', 'Phone', 'Status', 'Order Status', ...(!readOnly ? ['Actions'] : [])].map((h) => (
                   <th key={h} className="text-left px-4 py-3 text-xs font-bold uppercase tracking-widest" style={{ color: '#A8A29E' }}>{h}</th>
                 ))}
               </tr>
@@ -231,6 +274,18 @@ export default function EmployeesPage({ readOnly = false }) {
                     <span className="text-xs px-2.5 py-1 rounded-full font-semibold" style={STATUS_STYLES[emp.status]}>
                       {emp.status}
                     </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    {orderStatus[emp.name.toLowerCase()] ? (
+                      <span className="text-xs px-2.5 py-1 rounded-full font-semibold"
+                        style={{
+                          background: KDS_BADGE[orderStatus[emp.name.toLowerCase()]]?.bg,
+                          color:      KDS_BADGE[orderStatus[emp.name.toLowerCase()]]?.color,
+                          border:     `1px solid ${KDS_BADGE[orderStatus[emp.name.toLowerCase()]]?.border}`,
+                        }}>
+                        {KDS_BADGE[orderStatus[emp.name.toLowerCase()]]?.label}
+                      </span>
+                    ) : <span style={{ color: '#D6D3D1' }}>—</span>}
                   </td>
                   {!readOnly && (
                     <td className="px-4 py-3">

@@ -170,10 +170,11 @@ export default function KDSPage() {
   }, []);
 
   const connectWS = useCallback(() => {
+    if (wsRef.current?.readyState === WebSocket.CONNECTING) return;
     if (wsRef.current) wsRef.current.close();
     const ws = new WebSocket(WS_URL);
     wsRef.current = ws;
-    ws.onopen  = () => { setConn(true); backoff.current = 1000; loadOrders(); };
+    ws.onopen  = () => { setConn(true); backoff.current = 1000; };
     ws.onmessage = (e) => {
       try {
         const { event, data } = JSON.parse(e.data);
@@ -189,7 +190,7 @@ export default function KDSPage() {
         connectWS();
       }, backoff.current);
     };
-    ws.onerror = () => ws.close();
+    ws.onerror = () => {};
   }, [loadOrders, upsert]);
 
   useEffect(() => {
@@ -223,13 +224,17 @@ export default function KDSPage() {
   };
 
   const handleItem = async (orderId, itemId, done) => {
-    setOrders(prev => prev.map(o =>
-      o.id !== orderId ? o :
-      { ...o, items: o.items.map(it => it.id === itemId ? { ...it, done } : it) }
-    ));
+    // Optimistic update only — server response via WS broadcast
+    setOrders(prev => prev.map(o => {
+      if (o.id !== orderId) return o;
+      const updatedItems = o.items.map(it => it.id === itemId ? { ...it, done } : it);
+      const allDone = updatedItems.filter(it => it.showOnKDS).every(it => it.done);
+      return { ...o, items: updatedItems, stage: allDone ? 'completed' : o.stage };
+    }));
     try {
       await fetch(`${API}/api/kds/orders/${orderId}/items/${itemId}`, {
-        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ done }),
       });
     } catch (_) {}

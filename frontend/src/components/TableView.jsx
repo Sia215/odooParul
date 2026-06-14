@@ -78,7 +78,7 @@ export default function TableSelectorModal() {
         }
       } catch (_) {}
     };
-    ws.onerror = () => { if (active) ws.close(); };
+    ws.onerror = () => {};
     return () => { active = false; ws.close(); };
   }, []);
 

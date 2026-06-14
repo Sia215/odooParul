@@ -221,7 +221,7 @@ export default function OrderView() {
       });
 
       setKitchenMsg({ ok: true, text: `✓ ${order.orderNumber} sent to kitchen!` });
-      setTimeout(() => setKitchenMsg(null), 3000);
+      setTimeout(() => setKitchenMsg(null), 4000);
     } catch (err) {
       setKitchenMsg({ ok: false, text: err.message });
     } finally {
@@ -367,9 +367,11 @@ export default function OrderView() {
       {/* Col 2: Cart */}
       <div className="w-72 xl:w-80 shrink-0 overflow-hidden border-r border-gray-100 flex flex-col">
         {kitchenMsg && (
-          <div className={`mx-3 mt-2 px-3 py-2 rounded-lg text-xs font-semibold text-center
-            ${kitchenMsg.ok ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-red-50 text-red-600 border border-red-200'}`}>
-            {kitchenMsg.text}
+          <div className={`mx-3 mt-2 px-4 py-3 rounded-xl text-sm font-semibold text-center flex items-center justify-center gap-2 animate-pulse-once
+            ${kitchenMsg.ok
+              ? 'bg-amber-500 text-white shadow-md shadow-amber-200'
+              : 'bg-red-50 text-red-600 border border-red-200'}`}>
+            {kitchenMsg.ok ? '🍳' : '⚠️'} {kitchenMsg.text}
           </div>
         )}
         <CartPanel
