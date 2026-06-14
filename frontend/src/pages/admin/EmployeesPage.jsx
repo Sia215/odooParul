@@ -163,6 +163,19 @@ export default function EmployeesPage({ readOnly = false }) {
   const [orderStatus,  setOrderStatus] = useState({}); // cashierName.lower -> kdsStage
   const wsRef = useRef(null);
 
+  const fetchEmployees = async () => {
+    setLoading(true);
+    try {
+      const res  = await fetch(`${API}/employees`, { headers: authHeader() });
+      const data = await res.json();
+      setEmployees(Array.isArray(data) ? data : []);
+    } catch (_) {
+      setEmployees([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const fetchOrderStatus = async () => {
     try {
       const res  = await fetch(`${API}/kds/orders`);
@@ -199,24 +212,26 @@ export default function EmployeesPage({ readOnly = false }) {
   }, []);
 
   useEffect(() => {
-    fetch(`${API}/employees`, { headers: authHeader() })
-      .then((r) => r.json())
-      .then((data) => { setEmployees(Array.isArray(data) ? data : []); setLoading(false); })
-      .catch(() => setLoading(false));
+    fetchEmployees();
   }, []);
 
-  const handleInvited = (emp) => setEmployees((e) => [emp, ...e]);
+  const handleInvited = async (emp) => {
+    await fetchEmployees();
+  };
 
   const handleArchive = async (emp) => {
     const res  = await fetch(`${API}/employees/${emp._id}/archive`, { method: 'PATCH', headers: authHeader() });
-    const data = await res.json();
-    setEmployees((e) => e.map((x) => x._id === emp._id ? { ...x, status: data.status } : x));
+    if (res.ok) {
+      await fetchEmployees();
+    }
   };
 
   const handleDelete = async (id) => {
     if (!confirm('Permanently delete this employee?')) return;
-    await fetch(`${API}/employees/${id}`, { method: 'DELETE', headers: authHeader() });
-    setEmployees((e) => e.filter((x) => x._id !== id));
+    const res = await fetch(`${API}/employees/${id}`, { method: 'DELETE', headers: authHeader() });
+    if (res.ok) {
+      await fetchEmployees();
+    }
   };
 
   return (
