@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Plus, Pencil, Trash2, Check, X, ToggleLeft, ToggleRight, Users, Building2 } from 'lucide-react';
+import { useEffect, useState, useMemo } from 'react';
+import { Plus, Pencil, Trash2, Check, X, ToggleLeft, ToggleRight, Users, Building2, Search } from 'lucide-react';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -220,6 +220,24 @@ export default function FloorPlanPage() {
   const [showAddFloor, setShowAddFloor] = useState(false);
   const [newFloorName, setNewFloorName] = useState('');
   const [error, setError]         = useState('');
+  const [search, setSearch]       = useState('');
+  const [debSearch, setDebSearch] = useState('');
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebSearch(search), 600);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  const filtered = useMemo(() => {
+    if (!debSearch.trim()) return floors;
+    const q = debSearch.toLowerCase();
+    return floors
+      .map(f => ({
+        ...f,
+        tables: f.tables.filter(t => t.tableNumber.toLowerCase().includes(q)),
+      }))
+      .filter(f => f.name.toLowerCase().includes(q) || f.tables.length > 0);
+  }, [floors, debSearch]);
 
   const fetchFloors = async () => {
     setLoading(true);
@@ -310,7 +328,7 @@ export default function FloorPlanPage() {
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-xl font-semibold text-gray-900">Floor Plan</h1>
-          <p className="text-sm text-gray-500">{floors.length} floors configured</p>
+          <p className="text-sm text-gray-500">{filtered.length} floors configured</p>
         </div>
         <button
           onClick={() => setShowAddFloor(true)}
@@ -318,6 +336,12 @@ export default function FloorPlanPage() {
         >
           <Plus size={15} /> Add Floor
         </button>
+      </div>
+
+      <div className="relative mb-4">
+        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search floors or tables..."
+          className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-xl outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 bg-white" />
       </div>
 
       {/* Add Floor form */}
@@ -344,7 +368,7 @@ export default function FloorPlanPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          {floors.map((floor) => (
+          {filtered.map((floor) => (
             <FloorCard
               key={floor._id} floor={floor}
               onFloorUpdate={handleFloorUpdate}

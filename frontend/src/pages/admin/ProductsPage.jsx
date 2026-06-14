@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Plus, Pencil, Trash2, X } from 'lucide-react';
+import { useEffect, useState, useMemo } from 'react';
+import { Plus, Pencil, Trash2, X, Search } from 'lucide-react';
 import ProductForm from '../../components/admin/ProductForm';
 import { getProductImage } from '../../utils/productImages';
 
@@ -62,6 +62,17 @@ export default function ProductsPage({ readOnly = false }) {
   const [products, setProducts] = useState([]);
   const [editing, setEditing]   = useState(null);
   const [loading, setLoading]   = useState(true);
+  const [search, setSearch]     = useState('');
+  const [debSearch, setDebSearch] = useState('');
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebSearch(search), 600);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  const filtered = useMemo(() =>
+    debSearch.trim() ? products.filter(p => p.name.toLowerCase().includes(debSearch.toLowerCase())) : products
+  , [products, debSearch]);
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -93,7 +104,7 @@ export default function ProductsPage({ readOnly = false }) {
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-xl font-semibold text-gray-900">Products</h1>
-          <p className="text-sm text-gray-500">{products.length} items</p>
+          <p className="text-sm text-gray-500">{filtered.length} items</p>
         </div>
         {!readOnly && (
           <button
@@ -103,6 +114,12 @@ export default function ProductsPage({ readOnly = false }) {
             <Plus size={15} /> Add Product
           </button>
         )}
+      </div>
+
+      <div className="relative mb-4">
+        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search products..."
+          className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-xl outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 bg-white" />
       </div>
 
       <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
@@ -122,7 +139,7 @@ export default function ProductsPage({ readOnly = false }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {products.map((p) => (
+              {filtered.map((p) => (
                 <tr key={p._id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-4 py-3">
                     <ProductImage name={p.name} category={p.category?.name} image={p.image} />

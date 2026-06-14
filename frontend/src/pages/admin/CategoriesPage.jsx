@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Plus, Pencil, Trash2, Check, X } from 'lucide-react';
+import { useState, useMemo, useEffect } from 'react';
+import { Plus, Pencil, Trash2, Check, X, Search } from 'lucide-react';
 import { useCategories } from '../../context/CategoryContext';
 
 const PRESET_COLORS = [
@@ -34,6 +34,17 @@ export default function CategoriesPage({ readOnly = false }) {
   const [editName, setEditName] = useState('');
   const [editColor, setEditColor] = useState('');
   const [error, setError]       = useState('');
+  const [search, setSearch]     = useState('');
+  const [debSearch, setDebSearch] = useState('');
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebSearch(search), 600);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  const filtered = useMemo(() =>
+    debSearch.trim() ? categories.filter(c => c.name.toLowerCase().includes(debSearch.toLowerCase())) : categories
+  , [categories, debSearch]);
 
   const handleAdd = async (e) => {
     e.preventDefault();
@@ -67,7 +78,7 @@ export default function CategoriesPage({ readOnly = false }) {
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-xl font-semibold text-gray-900">Categories</h1>
-          <p className="text-sm text-gray-500">{categories.length} categories</p>
+          <p className="text-sm text-gray-500">{filtered.length} categories</p>
         </div>
         {!readOnly && (
           <button
@@ -77,6 +88,12 @@ export default function CategoriesPage({ readOnly = false }) {
             <Plus size={15} /> Add Category
           </button>
         )}
+      </div>
+
+      <div className="relative mb-4">
+        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search categories..."
+          className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-xl outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 bg-white" />
       </div>
 
       {error && <p className="text-xs text-red-500 bg-red-50 px-3 py-2 rounded-lg mb-4">{error}</p>}
@@ -110,7 +127,7 @@ export default function CategoriesPage({ readOnly = false }) {
           <p className="text-center py-12 text-gray-400 text-sm">No categories yet.</p>
         ) : (
           <ul className="divide-y divide-gray-100">
-            {categories.map((cat) => (
+            {filtered.map((cat) => (
               <li key={cat._id} className="flex items-center gap-3 px-4 py-3">
                 {editId === cat._id ? (
                   <>

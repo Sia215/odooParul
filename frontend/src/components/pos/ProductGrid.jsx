@@ -116,8 +116,14 @@ export default function ProductGrid({ searchQuery, onAddToCart }) {
   const [activeCategory, setActiveCategory] = useState('all');
   const [loading,        setLoading]        = useState(true);
   const [localSearch,    setLocalSearch]    = useState(searchQuery || '');
+  const [debouncedSearch, setDebouncedSearch] = useState(searchQuery || '');
 
   useEffect(() => { setLocalSearch(searchQuery || ''); }, [searchQuery]);
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(localSearch), 600);
+    return () => clearTimeout(t);
+  }, [localSearch]);
 
   useEffect(() => {
     Promise.all([
@@ -133,9 +139,9 @@ export default function ProductGrid({ searchQuery, onAddToCart }) {
   const filtered = useMemo(() => {
     let list = products;
     if (activeCategory !== 'all') list = list.filter(p => p.category?._id === activeCategory);
-    if (localSearch.trim()) list = list.filter(p => p.name.toLowerCase().includes(localSearch.toLowerCase()));
+    if (debouncedSearch.trim()) list = list.filter(p => p.name.toLowerCase().includes(debouncedSearch.toLowerCase()));
     return list;
-  }, [products, activeCategory, localSearch]);
+  }, [products, activeCategory, debouncedSearch]);
 
   return (
     <div className="flex h-full overflow-hidden">

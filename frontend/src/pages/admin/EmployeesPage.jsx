@@ -1,5 +1,5 @@
-import { useEffect, useState, useRef } from 'react';
-import { Plus, Trash2, Archive, KeyRound, X, UserPlus, Users } from 'lucide-react';
+import { useEffect, useState, useMemo, useRef } from 'react';
+import { Plus, Trash2, Archive, KeyRound, X, UserPlus, Users, Search } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 const ROLE_STYLES = {
@@ -167,6 +167,17 @@ export default function EmployeesPage({ readOnly = false }) {
   const [showInvite,   setShowInvite]  = useState(false);
   const [pwEmployee,   setPwEmployee]  = useState(null);
   const [orderStatus,  setOrderStatus] = useState({});
+  const [search, setSearch]            = useState('');
+  const [debSearch, setDebSearch]      = useState('');
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebSearch(search), 600);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  const filtered = useMemo(() =>
+    debSearch.trim() ? employees.filter(e => e.name.toLowerCase().includes(debSearch.toLowerCase()) || e.email.toLowerCase().includes(debSearch.toLowerCase())) : employees
+  , [employees, debSearch]);
   const wsRef = useRef(null);
 
   const fetchEmployees = async () => {
@@ -251,7 +262,7 @@ export default function EmployeesPage({ readOnly = false }) {
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-xl font-black" style={{ color: '#2E1A12', fontFamily: 'Georgia, serif' }}>Employees</h1>
-          <p className="text-sm mt-0.5" style={{ color: '#A8A29E' }}>{employees.length} {readOnly ? 'users' : 'accounts'}</p>
+          <p className="text-sm mt-0.5" style={{ color: '#A8A29E' }}>{filtered.length} {readOnly ? 'users' : 'accounts'}</p>
         </div>
         {!readOnly && (
           <button onClick={() => setShowInvite(true)}
@@ -262,6 +273,15 @@ export default function EmployeesPage({ readOnly = false }) {
             <Plus size={15} /> Invite Employee
           </button>
         )}
+      </div>
+
+      <div className="relative mb-4">
+        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#A8A29E' }} />
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search employees..."
+          className="w-full pl-9 pr-4 py-2 text-sm rounded-xl outline-none"
+          style={{ border: '1.5px solid #D6D3D1', background: '#FFFFFF', color: '#2E1A12' }}
+          onFocus={e => { e.target.style.borderColor = '#9A3412'; e.target.style.boxShadow = '0 0 0 3px rgba(154,52,18,0.1)'; }}
+          onBlur={e => { e.target.style.borderColor = '#D6D3D1'; e.target.style.boxShadow = 'none'; }} />
       </div>
 
       <div className="rounded-2xl overflow-hidden" style={{ background: '#FFFFFF', border: '1.5px solid #D6D3D1', boxShadow: '0 2px 12px rgba(46,26,18,0.06)' }}>
@@ -287,7 +307,7 @@ export default function EmployeesPage({ readOnly = false }) {
               </tr>
             </thead>
             <tbody>
-              {employees.map((emp, i) => (
+              {filtered.map((emp, i) => (
                 <tr key={emp._id}
                   className="transition-colors"
                   style={{

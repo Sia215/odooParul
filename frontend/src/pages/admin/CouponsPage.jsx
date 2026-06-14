@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Plus, Trash2, ToggleLeft, ToggleRight, Tag } from 'lucide-react';
+import { useEffect, useState, useMemo } from 'react';
+import { Plus, Trash2, ToggleLeft, ToggleRight, Tag, Search } from 'lucide-react';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 const EMPTY = { code: '', discountType: 'percentage', discountValue: '', active: true, expiresAt: '', usageLimit: '' };
@@ -10,6 +10,17 @@ export default function CouponsPage({ readOnly = false }) {
   const [showForm, setShowForm]   = useState(false);
   const [error, setError]         = useState('');
   const [loading, setLoading]     = useState(false);
+  const [search, setSearch]       = useState('');
+  const [debSearch, setDebSearch] = useState('');
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebSearch(search), 600);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  const filtered = useMemo(() =>
+    debSearch.trim() ? coupons.filter(c => c.code.toLowerCase().includes(debSearch.toLowerCase())) : coupons
+  , [coupons, debSearch]);
 
   useEffect(() => {
     fetch(`${API}/coupons`).then((r) => r.json()).then(setCoupons).catch(console.error);
@@ -55,7 +66,7 @@ export default function CouponsPage({ readOnly = false }) {
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-xl font-semibold text-gray-900">Coupons</h1>
-          <p className="text-sm text-gray-500">{coupons.length} coupon codes</p>
+          <p className="text-sm text-gray-500">{filtered.length} coupon codes</p>
         </div>
         {!readOnly && (
           <button onClick={() => setShowForm(true)}
@@ -63,6 +74,12 @@ export default function CouponsPage({ readOnly = false }) {
             <Plus size={15} /> Add Coupon
           </button>
         )}
+      </div>
+
+      <div className="relative mb-4">
+        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search coupons..."
+          className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-xl outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 bg-white" />
       </div>
 
       {!readOnly && showForm && (
@@ -135,7 +152,7 @@ export default function CouponsPage({ readOnly = false }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {coupons.map((c) => (
+              {filtered.map((c) => (
                 <tr key={c._id} className="hover:bg-gray-50">
                   <td className="px-4 py-3 font-mono font-bold text-indigo-700">{c.code}</td>
                   <td className="px-4 py-3 text-gray-700">

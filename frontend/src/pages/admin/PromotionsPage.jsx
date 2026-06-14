@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Plus, Trash2, Zap, ToggleLeft, ToggleRight } from 'lucide-react';
+import { useEffect, useState, useMemo } from 'react';
+import { Plus, Trash2, Zap, ToggleLeft, ToggleRight, Search } from 'lucide-react';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 const EMPTY = { name: '', triggerType: 'order', productId: '', minQty: '', minOrderAmount: '', discountType: 'percentage', discountValue: '', active: true };
@@ -11,6 +11,17 @@ export default function PromotionsPage() {
   const [showForm, setShowForm] = useState(false);
   const [error, setError]       = useState('');
   const [loading, setLoading]   = useState(false);
+  const [search, setSearch]     = useState('');
+  const [debSearch, setDebSearch] = useState('');
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebSearch(search), 600);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  const filtered = useMemo(() =>
+    debSearch.trim() ? promos.filter(p => p.name.toLowerCase().includes(debSearch.toLowerCase())) : promos
+  , [promos, debSearch]);
 
   useEffect(() => {
     fetch(`${API}/promotions`).then((r) => r.json()).then(setPromos).catch(console.error);
@@ -65,6 +76,12 @@ export default function PromotionsPage() {
           className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm rounded-lg font-medium">
           <Plus size={15} /> Add Promotion
         </button>
+      </div>
+
+      <div className="relative mb-4">
+        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search promotions..."
+          className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-xl outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 bg-white" />
       </div>
 
       {showForm && (
@@ -156,7 +173,7 @@ export default function PromotionsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {promos.map((p) => (
+              {filtered.map((p) => (
                 <tr key={p._id} className="hover:bg-gray-50">
                   <td className="px-4 py-3 font-medium text-gray-800">{p.name}</td>
                   <td className="px-4 py-3 text-gray-500 text-xs">
