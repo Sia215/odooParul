@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Plus, Pencil, Trash2, X } from 'lucide-react';
 import ProductForm from '../../components/admin/ProductForm';
+import { getProductImage } from '../../utils/productImages';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -29,28 +30,32 @@ function getEmoji(name) {
   return '\ud83c\udf7d\ufe0f';
 }
 
-async function fetchFoodImage(name) {
-  try {
-    const terms = [name, name.split(' ')[0], name.split(' ').pop()];
-    for (const term of [...new Set(terms)]) {
-      const res  = await fetch(`https://www.themealdb.com/api/json/v1/1/search.php?s=${encodeURIComponent(term)}`);
-      const data = await res.json();
-      if (data.meals?.[0]?.strMealThumb) return data.meals[0].strMealThumb;
-    }
-  } catch (_) {}
-  return null;
-}
+function ProductImage({ name, category, image }) {
+  const [src, setSrc] = useState(() => getProductImage(name, category, image));
+  const [error, setError] = useState(false);
 
-function ProductImage({ name }) {
-  const [src, setSrc] = useState(null);
-  useEffect(() => { fetchFoodImage(name).then(setSrc); }, [name]);
+  useEffect(() => {
+    if (image) {
+      setSrc(image);
+      setError(false);
+      return;
+    }
+
+    setError(false);
+    setSrc(getProductImage(name, category, image));
+  }, [name, category, image]);
+
   const emoji = getEmoji(name);
-  if (!src) return (
-    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-50 to-purple-50 flex items-center justify-center shrink-0 text-xl">
-      {emoji}
-    </div>
-  );
-  return <img src={src} alt={name} className="w-10 h-10 rounded-lg object-cover shrink-0" />;
+
+  if (!src || error) {
+    return (
+      <div className="w-10 h-10 rounded-lg bg-linear-to-br from-indigo-50 to-purple-50 flex items-center justify-center shrink-0 text-xl">
+        {emoji}
+      </div>
+    );
+  }
+
+  return <img src={src} alt={name} onError={() => setError(true)} className="w-10 h-10 rounded-lg object-cover shrink-0" />;
 }
 
 export default function ProductsPage({ readOnly = false }) {
@@ -120,7 +125,7 @@ export default function ProductsPage({ readOnly = false }) {
               {products.map((p) => (
                 <tr key={p._id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-4 py-3">
-                    <ProductImage name={p.name} />
+                    <ProductImage name={p.name} category={p.category?.name} image={p.image} />
                   </td>
                   <td className="px-4 py-3 font-medium text-gray-800">{p.name}</td>
                   <td className="px-4 py-3">

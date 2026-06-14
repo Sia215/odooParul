@@ -14,6 +14,7 @@ export default function CartPanel({
   currentCustomer, onOpenCustomers, onUnlinkCustomer,
   onSendToKitchen, sendingToKitchen,
   onSendBill,
+  onNotesChange,
 }) {
   const [showDiscountModal, setShowDiscountModal] = useState(false);
 
@@ -103,10 +104,22 @@ export default function CartPanel({
                     </div>
                   </div>
 
+                  {/* Special Recommendations / Kitchen Notes Input Box */}
+                  <div className="mt-1 px-1">
+                    <input
+                      type="text"
+                      value={item.kitchen_notes || ''}
+                      onChange={(e) => onNotesChange(item._id, e.target.value)}
+                      placeholder="Special Recommendations / Kitchen Notes"
+                      className="w-full text-[11px] px-2.5 py-1.5 rounded-lg border border-[#D6D3D1] outline-none transition-all duration-150 focus:ring-2 focus:ring-[#9A3412] focus:outline-none placeholder-stone-400 font-medium"
+                      style={{ background: '#FAFAF6', color: '#2E1A12' }}
+                    />
+                  </div>
+
                   {/* Product-level promo badge */}
                   {promo && (
-                    <div className="flex items-center gap-1.5 px-3 py-1 mx-0.5 mb-0.5 rounded-b-xl -mt-1"
-                      style={{ background: '#FFFBEB', border: '1px solid #FDE68A', borderTop: 'none' }}>
+                    <div className="flex items-center gap-1.5 px-3 py-1 mx-0.5 mb-0.5 rounded-b-xl mt-1"
+                      style={{ background: '#FFFBEB', border: '1px solid #FDE68A' }}>
                       <Zap size={11} style={{ color: '#92400E' }} className="shrink-0" />
                       <span className="text-[11px] font-medium" style={{ color: '#92400E' }}>{promo.label}</span>
                       <span className="ml-auto text-[11px] font-bold" style={{ color: '#92400E' }}>−₹{promo.discAmount.toFixed(2)}</span>

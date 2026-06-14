@@ -116,21 +116,28 @@ function TicketCard({ order, onStage, onItem }) {
             key={item.id}
             data-item="true"
             onClick={(e) => { e.stopPropagation(); onItem(order.id, item.id, !item.done); }}
-            className="flex items-center gap-2 py-1 px-1 rounded-lg cursor-pointer transition-colors min-h-[32px]"
+            className="flex flex-col py-1 px-1 rounded-lg cursor-pointer transition-colors"
             style={{ marginTop: '0.25rem' }}
             onMouseEnter={e => e.currentTarget.style.background = '#FFF0EB'}
             onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
           >
-            <span className="text-sm font-bold w-6 text-center shrink-0" style={{ color: meta.color }}>
-              {item.quantity}
-            </span>
-            <span className="text-xs shrink-0" style={{ color: '#A8A29E' }}>×</span>
-            <span className="text-sm font-medium flex-1" style={{
-              textDecoration: item.done ? 'line-through' : 'none',
-              color: item.done ? '#A8A29E' : '#2E1A12',
-            }}>
-              {item.productName}
-            </span>
+            <div className="flex items-center gap-2 min-h-[32px]">
+              <span className="text-sm font-bold w-6 text-center shrink-0" style={{ color: meta.color }}>
+                {item.quantity}
+              </span>
+              <span className="text-xs shrink-0" style={{ color: '#A8A29E' }}>×</span>
+              <span className="text-sm font-medium flex-1" style={{
+                textDecoration: item.done ? 'line-through' : 'none',
+                color: item.done ? '#A8A29E' : '#2E1A12',
+              }}>
+                {item.productName}
+              </span>
+            </div>
+            {item.kitchen_notes && (
+              <div className="text-[10px] font-bold mt-0.5 ml-8 text-[#2E1A12] leading-tight px-1.5 py-0.5 bg-stone-100 rounded border border-stone-200 uppercase tracking-wide">
+                ⚠️ {item.kitchen_notes}
+              </div>
+            )}
           </div>
         ))}
       </div>

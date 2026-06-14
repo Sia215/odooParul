@@ -14,6 +14,7 @@ const productSchema = new mongoose.Schema({
     type: Number, default: 0,
     validate: { validator: (v) => v >= 0 && v <= 100, message: 'Tax must be between 0 and 100' },
   },
+  image:       { type: String, trim: true, default: '' },
   description: { type: String, trim: true, default: '' },
 }, { timestamps: true });
 

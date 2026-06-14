@@ -6,6 +6,7 @@ const tableSchema = new mongoose.Schema({
   active:      { type: Boolean, default: true },
   occupied:    { type: Boolean, default: false },
   currentOrderId: { type: mongoose.Schema.Types.ObjectId, ref: 'Order', default: null },
+  shape:       { type: String, enum: ['ROUND', 'SQUARE', 'RECTANGLE'], default: 'SQUARE' },
   floor:       { type: mongoose.Schema.Types.ObjectId, ref: 'Floor', required: true },
 }, { timestamps: true });
 

@@ -29,11 +29,11 @@ router.get('/:id', async (req, res) => {
 
 // POST /api/products
 router.post('/', async (req, res) => {
-  const { name, category, price, unit, tax, description } = req.body;
+  const { name, category, price, unit, tax, description, image } = req.body;
   if (!name || !category || price === undefined)
     return res.status(400).json({ message: 'Name, category and price are required.' });
   try {
-    const product = await Product.create({ name, category, price, unit, tax, description });
+    const product = await Product.create({ name, category, price, unit, tax, description, image });
     const populated = await product.populate('category', 'name color');
     res.status(201).json(populated);
   } catch (err) {

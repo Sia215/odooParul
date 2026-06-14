@@ -6,7 +6,7 @@ const API = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 // ── Inline editable row for a table ────────────────────────────
 function TableRow({ table, onUpdate, onDelete, onToggle }) {
   const [editing, setEditing] = useState(false);
-  const [form, setForm]       = useState({ tableNumber: table.tableNumber, seats: table.seats });
+  const [form, setForm]       = useState({ tableNumber: table.tableNumber, seats: table.seats, shape: table.shape || 'SQUARE' });
 
   const handleSave = async () => {
     await onUpdate(table._id, form);
@@ -21,7 +21,7 @@ function TableRow({ table, onUpdate, onDelete, onToggle }) {
           <input
             value={form.tableNumber}
             onChange={(e) => setForm((f) => ({ ...f, tableNumber: e.target.value }))}
-            className="border border-gray-300 rounded-lg px-2 py-1 text-sm w-28 outline-none focus:border-indigo-500"
+            className="border border-gray-300 rounded-lg px-2 py-1 text-sm w-24 outline-none focus:border-indigo-500"
             placeholder="Table No."
           />
           <div className="flex items-center gap-1">
@@ -29,9 +29,25 @@ function TableRow({ table, onUpdate, onDelete, onToggle }) {
             <input
               type="number" min="1" max="50"
               value={form.seats}
-              onChange={(e) => setForm((f) => ({ ...f, seats: e.target.value }))}
-              className="border border-gray-300 rounded-lg px-2 py-1 text-sm w-16 outline-none focus:border-indigo-500"
+              onChange={(e) => setForm((f) => ({ ...f, seats: Number(e.target.value) }))}
+              className="border border-gray-300 rounded-lg px-2 py-1 text-sm w-12 outline-none focus:border-indigo-500"
             />
+          </div>
+          <div className="flex gap-0.5 bg-stone-100 p-0.5 rounded-lg border border-stone-200">
+            {['ROUND', 'SQUARE', 'RECTANGLE'].map((s) => (
+              <button
+                key={s}
+                type="button"
+                onClick={() => setForm((f) => ({ ...f, shape: s }))}
+                className={`px-1.5 py-0.5 text-[10px] font-semibold rounded-md transition-all active:scale-95 ${
+                  form.shape === s
+                    ? 'bg-[#9A3412] text-white'
+                    : 'text-[#78716C] hover:bg-stone-200'
+                }`}
+              >
+                {s.toLowerCase()}
+              </button>
+            ))}
           </div>
           <button onClick={handleSave} className="p-1.5 text-green-500 hover:bg-green-50 rounded-lg">
             <Check size={14} />
@@ -42,9 +58,12 @@ function TableRow({ table, onUpdate, onDelete, onToggle }) {
         </>
       ) : (
         <>
-          <span className="text-sm font-semibold text-gray-800 w-28">{table.tableNumber}</span>
+          <span className="text-sm font-semibold text-gray-800 w-24">{table.tableNumber}</span>
           <span className="flex items-center gap-1 text-xs text-gray-500">
             <Users size={12} /> {table.seats} seats
+          </span>
+          <span className="text-[10px] px-2 py-0.5 rounded-full bg-stone-100 text-[#2E1A12] border border-stone-200 font-bold uppercase">
+            {table.shape || 'SQUARE'}
           </span>
           <span className={`ml-auto text-xs px-2 py-0.5 rounded-full font-medium
             ${table.active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
@@ -71,7 +90,7 @@ function FloorCard({ floor, onFloorUpdate, onFloorDelete, onTableCreate, onTable
   const [editingFloor, setEditingFloor] = useState(false);
   const [floorName, setFloorName]       = useState(floor.name);
   const [showAddTable, setShowAddTable] = useState(false);
-  const [newTable, setNewTable]         = useState({ tableNumber: '', seats: 2 });
+  const [newTable, setNewTable]         = useState({ tableNumber: '', seats: 2, shape: 'SQUARE' });
   const [error, setError]               = useState('');
 
   const saveFloor = async () => {
@@ -84,7 +103,7 @@ function FloorCard({ floor, onFloorUpdate, onFloorDelete, onTableCreate, onTable
     setError('');
     try {
       await onTableCreate({ ...newTable, floor: floor._id });
-      setNewTable({ tableNumber: '', seats: 2 });
+      setNewTable({ tableNumber: '', seats: 2, shape: 'SQUARE' });
       setShowAddTable(false);
     } catch (err) { setError(err.message); }
   };
@@ -138,25 +157,47 @@ function FloorCard({ floor, onFloorUpdate, onFloorDelete, onTableCreate, onTable
 
         {/* Add table form */}
         {showAddTable ? (
-          <form onSubmit={handleAddTable} className="flex items-center gap-2 mt-1 pt-2 border-t border-dashed border-gray-200">
-            <input
-              autoFocus required
-              value={newTable.tableNumber}
-              onChange={(e) => setNewTable((f) => ({ ...f, tableNumber: e.target.value }))}
-              placeholder="Table No. (e.g. T-01)"
-              className="flex-1 border border-gray-300 rounded-lg px-2 py-1.5 text-sm outline-none focus:border-indigo-500"
-            />
-            <div className="flex items-center gap-1">
-              <Users size={13} className="text-gray-400" />
+          <form onSubmit={handleAddTable} className="flex flex-col gap-2 mt-1 pt-2 border-t border-dashed border-gray-200">
+            <div className="flex items-center gap-2">
               <input
-                type="number" min="1" max="50" required
-                value={newTable.seats}
-                onChange={(e) => setNewTable((f) => ({ ...f, seats: Number(e.target.value) }))}
-                className="border border-gray-300 rounded-lg px-2 py-1.5 text-sm w-14 outline-none focus:border-indigo-500"
+                autoFocus required
+                value={newTable.tableNumber}
+                onChange={(e) => setNewTable((f) => ({ ...f, tableNumber: e.target.value }))}
+                placeholder="Table No. (e.g. T-01)"
+                className="flex-1 border border-gray-300 rounded-lg px-2 py-1.5 text-sm outline-none focus:border-[#9A3412] focus:ring-2 focus:ring-[#9A3412]/10"
               />
+              <div className="flex items-center gap-1">
+                <Users size={13} className="text-gray-400" />
+                <input
+                  type="number" min="1" max="50" required
+                  value={newTable.seats}
+                  onChange={(e) => setNewTable((f) => ({ ...f, seats: Number(e.target.value) }))}
+                  className="border border-gray-300 rounded-lg px-2 py-1.5 text-sm w-12 outline-none focus:border-[#9A3412] focus:ring-2 focus:ring-[#9A3412]/10"
+                />
+              </div>
             </div>
-            <button type="submit" className="p-1.5 text-green-500 hover:bg-green-50 rounded-lg"><Check size={14} /></button>
-            <button type="button" onClick={() => setShowAddTable(false)} className="p-1.5 text-gray-400 hover:bg-gray-100 rounded-lg"><X size={14} /></button>
+            <div className="flex items-center justify-between gap-2 mt-1">
+              <div className="flex items-center gap-1 bg-stone-100 p-0.5 rounded-lg border border-stone-200">
+                {['ROUND', 'SQUARE', 'RECTANGLE'].map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => setNewTable((f) => ({ ...f, shape: s }))}
+                    className={`px-2 py-1 text-xs font-semibold rounded-md transition-all active:scale-95 ${
+                      newTable.shape === s
+                        ? 'bg-[#9A3412] text-white'
+                        : 'text-[#78716C] hover:bg-stone-200'
+                    }`}
+                  >
+                    {s.toLowerCase()}
+                  </button>
+                ))}
+              </div>
+              <div className="flex items-center gap-1">
+                <button type="submit" className="p-1.5 text-green-500 hover:bg-green-50 rounded-lg"><Check size={14} /></button>
+                <button type="button" onClick={() => setShowAddTable(false)} className="p-1.5 text-gray-400 hover:bg-gray-100 rounded-lg"><X size={14} /></button>
+              </div>
+            </div>
           </form>
         ) : (
           <button

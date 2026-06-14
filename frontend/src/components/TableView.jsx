@@ -9,33 +9,37 @@ function TableCard({ table, floorName, isSelected, onSelect }) {
 
   const baseStyle = {
     selected: { background: '#9A3412', border: '2px solid #9A3412', color: 'white', boxShadow: '0 6px 20px rgba(154,52,18,0.28)', transform: 'scale(1.05)' },
-    occupied: { background: '#FFFBEB', border: '2px solid #FDE68A', color: '#92400E' },
-    vacant:   { background: 'white',   border: '1.5px solid #D6D3D1', color: '#2E1A12' },
+    occupied: { background: '#7A2B12', border: '2px solid #7A2B12', color: 'white', boxShadow: '0 4px 12px rgba(46,26,18,0.15)' },
+    vacant:   { background: '#F3E1D0', border: '1.5px solid #D6B8A0', color: '#4A2D1E' },
   };
 
   const badgeStyle = {
     selected: { background: '#7C2D12', color: 'white' },
-    occupied: { background: '#FEF3C7', color: '#92400E' },
-    vacant:   { background: '#FFF0EB', color: '#9A3412' },
+    occupied: { background: 'rgba(255,255,255,0.2)', color: 'white' },
+    vacant:   { background: '#F9E6D6', color: '#9A3412' },
   };
 
   const badgeLabel = { selected: 'Selected', occupied: 'In Use', vacant: 'Open' };
 
   return (
     <button onClick={() => onSelect({ _id: table._id, number: table.tableNumber, floor: floorName })}
-      className="relative flex flex-col items-center justify-center gap-1.5 rounded-2xl p-3 aspect-square transition-all duration-150 active:scale-95"
+      className="relative flex flex-col items-center justify-center gap-2 p-3 transition-all duration-150 active:scale-95 aspect-square w-24 h-24 rounded-2xl"
       style={baseStyle[state]}
-      onMouseEnter={e => { if (state === 'vacant') { e.currentTarget.style.border = '2px solid rgba(154,52,18,0.4)'; e.currentTarget.style.background = '#FFF0EB'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(154,52,18,0.12)'; } }}
-      onMouseLeave={e => { if (state === 'vacant') { e.currentTarget.style.border = '1.5px solid #D6D3D1'; e.currentTarget.style.background = 'white'; e.currentTarget.style.boxShadow = 'none'; } }}>
+      onMouseEnter={e => { if (state === 'vacant') { e.currentTarget.style.border = '2px solid rgba(154,52,18,0.4)'; e.currentTarget.style.background = '#EED4C1'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(154,52,18,0.12)'; } }}
+      onMouseLeave={e => { if (state === 'vacant') { e.currentTarget.style.border = '1.5px solid #D6B8A0'; e.currentTarget.style.background = '#F3E1D0'; e.currentTarget.style.boxShadow = 'none'; } }}>
       <div className="absolute top-2 right-2">
         {state === 'selected' && <CheckCircle size={13} style={{ color: 'rgba(255,240,235,0.85)' }} />}
-        {state === 'occupied' && <Clock size={13} style={{ color: '#D97706' }} />}
+        {state === 'occupied' && <Clock size={13} style={{ color: 'white' }} />}
         {state === 'vacant'   && <div className="w-2 h-2 rounded-full" style={{ background: '#9A3412', opacity: 0.4 }} />}
       </div>
-      <span className="text-base font-bold leading-none">{table.tableNumber}</span>
+      <span className="text-sm font-bold leading-none">{table.tableNumber}</span>
       <span className="flex items-center gap-0.5 text-xs font-medium"
-        style={{ color: state === 'selected' ? 'rgba(255,240,235,0.85)' : state === 'occupied' ? '#D97706' : '#A8A29E' }}>
+        style={{ color: state === 'selected' ? 'rgba(255,240,235,0.85)' : state === 'occupied' ? 'rgba(255,255,255,0.7)' : '#A8A29E' }}>
         <Users size={11} /> {table.seats}
+      </span>
+      <span className="text-[10px] uppercase tracking-[0.08em] font-semibold px-2 py-0.5 rounded-full"
+        style={{ background: 'rgba(255,255,255,0.45)', color: state === 'selected' ? 'white' : '#4A2D1E' }}>
+        {table.shape || 'SQUARE'}
       </span>
       <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full" style={badgeStyle[state]}>{badgeLabel[state]}</span>
     </button>
@@ -164,7 +168,7 @@ export default function TableSelectorModal() {
             <div className="flex items-center justify-center h-40 text-sm" style={{ color: '#A8A29E' }}>No active tables on this floor.</div>
           )}
           {!loading && !error && tables.length > 0 && (
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 pt-4">
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-0.5 pt-4">
               {tables.map(table => (
                 <TableCard key={table._id} table={table} floorName={currentFloorData.name}
                   isSelected={currentTable?._id === table._id} onSelect={selectTable} />

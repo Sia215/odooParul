@@ -6,6 +6,7 @@ const orderItemSchema = new mongoose.Schema({
   price:       { type: Number, required: true },
   qty:         { type: Number, required: true, min: 1 },
   category:    { name: String, color: String },
+  kitchen_notes: { type: String, default: '' },
 }, { _id: false });
 
 const orderSchema = new mongoose.Schema({

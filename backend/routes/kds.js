@@ -107,6 +107,7 @@ function toKDS(order) {
       productName: it.name,
       category: it.category?.name || '',
       quantity: it.qty,
+      kitchen_notes: it.kitchen_notes || '',
       showOnKDS: true,
       done: (order.kdsItemsDone || []).includes(String(idx)),
     })),

@@ -16,11 +16,11 @@ router.get('/', async (req, res) => {
 
 // POST /api/tables
 router.post('/', async (req, res) => {
-  const { tableNumber, seats, floor } = req.body;
+  const { tableNumber, seats, floor, shape } = req.body;
   if (!tableNumber || !seats || !floor)
     return res.status(400).json({ message: 'tableNumber, seats and floor are required.' });
   try {
-    const table = await Table.create({ tableNumber, seats, floor });
+    const table = await Table.create({ tableNumber, seats, floor, shape });
     res.status(201).json(table);
   } catch (err) {
     const msg = err.code === 11000 ? 'Table number already exists on this floor.' : err.message;

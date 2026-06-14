@@ -128,6 +128,7 @@ export default function OrderView() {
       price:    i.price,
       qty:      i.qty,
       category: i.category,
+      kitchen_notes: i.kitchen_notes || '',
     })));
     setSelectedItemId(null);
     setEditingOrder(null);
@@ -137,9 +138,15 @@ export default function OrderView() {
     setCartItems((prev) => {
       const exists = prev.find((i) => i._id === product._id);
       if (exists) return prev.map((i) => i._id === product._id ? { ...i, qty: i.qty + 1 } : i);
-      return [...prev, { ...product, qty: 1 }];
+      return [...prev, { ...product, qty: 1, kitchen_notes: '' }];
     });
     setSelectedItemId(product._id);
+  }, []);
+
+  const handleNotesChange = useCallback((id, notes) => {
+    setCartItems((prev) =>
+      prev.map((i) => (i._id === id ? { ...i, kitchen_notes: notes } : i))
+    );
   }, []);
 
   const handleIncrement = (id) =>
@@ -201,7 +208,7 @@ export default function OrderView() {
     try {
       const orderPayload = {
         items: cartItems.map(i => ({
-          productId: i._id, name: i.name, price: i.price, qty: i.qty, category: i.category || {},
+          productId: i._id, name: i.name, price: i.price, qty: i.qty, category: i.category || {}, kitchen_notes: i.kitchen_notes || '',
         })),
         customer:    currentCustomer?.name || 'Walk-in',
         table:       currentTable ? { number: String(currentTable.number), floor: currentTable.floor } : {},
@@ -237,7 +244,7 @@ export default function OrderView() {
     try {
       const orderPayload = {
         items: cartItems.map(i => ({
-          productId: i._id, name: i.name, price: i.price, qty: i.qty, category: i.category || {},
+          productId: i._id, name: i.name, price: i.price, qty: i.qty, category: i.category || {}, kitchen_notes: i.kitchen_notes || '',
         })),
         customer:      currentCustomer?.name || 'Walk-in',
         customerEmail: currentCustomer?.email || '',
@@ -409,6 +416,7 @@ export default function OrderView() {
           onSendToKitchen={handleSendToKitchen}
           sendingToKitchen={sendingToKitchen}
           onSendBill={handleSendBillFromCart}
+          onNotesChange={handleNotesChange}
         />
       </div>
 
